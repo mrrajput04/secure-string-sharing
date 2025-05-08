@@ -6,6 +6,8 @@ This is a simple Node.js application that allows users to securely share private
 
 - Create and share secret strings/text with password protection
 - AES-256-GCM encryption for maximum security
+- String expiration options (1 hour, 24 hours, 3 days, 7 days, 30 days)
+- Rate limiting to prevent brute-force attacks
 - Simple and intuitive user interface
 - Copy functionality for easy sharing
 - Responsive design that works on mobile and desktop
@@ -42,11 +44,12 @@ npm start
 
 - This application uses AES-256-GCM encryption with salting and key derivation
 - All encryption/decryption happens on the server
+- Rate limiting prevents brute force password attacks (5 attempts per 15 min window)
+- String expiration automatically removes old data
 - In a production environment, consider:
   - Adding HTTPS
   - Using a proper database instead of in-memory storage
-  - Implementing rate limiting
-  - Adding string expiration functionality
+  - Adding additional monitoring and alerting
 
 ## Project Structure
 
