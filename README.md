@@ -9,6 +9,7 @@ This is a simple Node.js application that allows users to securely share private
 - Simple and intuitive user interface
 - Copy functionality for easy sharing
 - Responsive design that works on mobile and desktop
+- Dark mode toggle with automatic system preference detection
 
 ## Installation
 
