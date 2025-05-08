@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>View Secure String</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      padding-top: 50px;
+    }
+    .container {
+      max-width: 800px;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card shadow">
+      <div class="card-header bg-primary text-white">
+        <h1 class="h4 mb-0">Access Secure String</h1>
+      </div>
+      <div class="card-body">
+        <div id="passwordSection">
+          <p>This link contains a secure string that requires a password to view.</p>
+          <form id="accessForm">
+            <div class="mb-3">
+              <label for="password" class="form-label">Enter Password</label>
+              <input type="password" class="form-control" id="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Access String</button>
+          </form>
+        </div>
+        
+        <div id="resultSection" class="mt-4 hidden">
+          <div class="alert alert-success">
+            <h5>Secure String Contents:</h5>
+            <div class="border rounded p-3 bg-light mb-3">
+              <pre id="secretContent" style="white-space: pre-wrap; word-break: break-word;"></pre>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+              <button id="closeBtn" class="btn btn-secondary">Close</button>
+              <button id="copyContentBtn" class="btn btn-outline-primary">Copy Content</button>
+            </div>
+          </div>
+        </div>
+        
+        <div id="errorSection" class="mt-4 hidden">
+          <div class="alert alert-danger">
+            <p id="errorMessage"></p>
+            <button id="tryAgainBtn" class="btn btn-sm btn-outline-danger mt-2">Try Again</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const stringId = window.location.pathname.split('/').pop();
+    
+    document.getElementById('accessForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const password = document.getElementById('password').value;
+      
+      try {
+        const response = await fetch(`/api/strings/${stringId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ password }),
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+          document.getElementById('secretContent').textContent = data.string;
+          document.getElementById('passwordSection').classList.add('hidden');
+          document.getElementById('resultSection').classList.remove('hidden');
+          document.getElementById('errorSection').classList.add('hidden');
+        } else {
+          document.getElementById('errorMessage').textContent = data.error || 'Unknown error occurred';
+          document.getElementById('errorSection').classList.remove('hidden');
+        }
+      } catch (error) {
+        document.getElementById('errorMessage').textContent = 'An error occurred. Please try again.';
+        document.getElementById('errorSection').classList.remove('hidden');
+        console.error(error);
+      }
+    });
+    
+    document.getElementById('tryAgainBtn').addEventListener('click', () => {
+      document.getElementById('errorSection').classList.add('hidden');
+      document.getElementById('password').value = '';
+      document.getElementById('password').focus();
+    });
+    
+    document.getElementById('closeBtn').addEventListener('click', () => {
+      document.getElementById('passwordSection').classList.remove('hidden');
+      document.getElementById('resultSection').classList.add('hidden');
+      document.getElementById('password').value = '';
+    });
+    
+    document.getElementById('copyContentBtn').addEventListener('click', () => {
+      const content = document.getElementById('secretContent').textContent;
+      navigator.clipboard.writeText(content).then(() => {
+        const copyBtn = document.getElementById('copyContentBtn');
+        const originalText = copyBtn.textContent;
+        copyBtn.textContent = 'Copied!';
+        
+        setTimeout(() => {
+          copyBtn.textContent = originalText;
+        }, 2000);
+      });
+    });
+  </script>
+</body>
+</html>
