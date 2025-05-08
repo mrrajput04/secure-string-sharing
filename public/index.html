@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Secure String Sharing</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      padding-top: 50px;
+    }
+    .container {
+      max-width: 800px;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card shadow">
+      <div class="card-header bg-primary text-white">
+        <h1 class="h4 mb-0">Create Secure Shared String</h1>
+      </div>
+      <div class="card-body">
+        <form id="createForm">
+          <div class="mb-3">
+            <label for="secretString" class="form-label">Secret String/Message</label>
+            <textarea class="form-control" id="secretString" rows="5" required></textarea>
+          </div>
+          <div class="mb-3">
+            <label for="password" class="form-label">Protection Password</label>
+            <input type="password" class="form-control" id="password" required>
+            <div class="form-text">Anyone with this password will be able to access your string.</div>
+          </div>
+          <button type="submit" class="btn btn-primary">Generate Secure Link</button>
+        </form>
+        
+        <div id="resultSection" class="mt-4 hidden">
+          <div class="alert alert-success">
+            <h5>Your secure string has been created!</h5>
+            <p>Share this link with anyone you want to access the string:</p>
+            <div class="input-group mb-3">
+              <input type="text" id="shareLink" class="form-control" readonly>
+              <button class="btn btn-outline-secondary" type="button" id="copyBtn">Copy</button>
+            </div>
+            <p class="mb-0"><strong>Remember:</strong> They will need the password to view the content.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('createForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const string = document.getElementById('secretString').value;
+      const password = document.getElementById('password').value;
+      
+      try {
+        const response = await fetch('/api/strings', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ string, password }),
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          document.getElementById('shareLink').value = data.shareUrl;
+          document.getElementById('resultSection').classList.remove('hidden');
+        } else {
+          alert('Error: ' + data.error);
+        }
+      } catch (error) {
+        alert('An error occurred. Please try again.');
+        console.error(error);
+      }
+    });
+    
+    document.getElementById('copyBtn').addEventListener('click', () => {
+      const linkInput = document.getElementById('shareLink');
+      linkInput.select();
+      document.execCommand('copy');
+      
+      const copyBtn = document.getElementById('copyBtn');
+      const originalText = copyBtn.textContent;
+      copyBtn.textContent = 'Copied!';
+      
+      setTimeout(() => {
+        copyBtn.textContent = originalText;
+      }, 2000);
+    });
+  </script>
+</body>
+</html>
