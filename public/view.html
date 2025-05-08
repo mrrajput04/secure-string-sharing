@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +8,7 @@
   <style>
     body {
       padding-top: 50px;
+      transition: background-color 0.3s ease;
     }
     .container {
       max-width: 800px;
@@ -15,9 +16,32 @@
     .hidden {
       display: none;
     }
+    .theme-toggle {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      z-index: 1000;
+    }
+    .dark-mode-icon, .light-mode-icon {
+      cursor: pointer;
+      font-size: 1.5rem;
+      padding: 5px;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: rgba(0,0,0,0.1);
+    }
   </style>
 </head>
 <body>
+  <div class="theme-toggle">
+    <div class="dark-mode-icon" id="darkModeToggle">🌙</div>
+    <div class="light-mode-icon hidden" id="lightModeToggle">☀️</div>
+  </div>
+  
   <div class="container">
     <div class="card shadow">
       <div class="card-header bg-primary text-white">
@@ -117,6 +141,40 @@
         }, 2000);
       });
     });
+  </script>
+  
+  <!-- Dark mode script -->
+  <script>
+    // Check for saved theme preference or use the system preference
+    function getInitialTheme() {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme) {
+        return savedTheme;
+      }
+      return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    
+    // Apply theme to page
+    function applyTheme(theme) {
+      document.documentElement.setAttribute('data-bs-theme', theme);
+      
+      if (theme === 'dark') {
+        document.getElementById('darkModeToggle').classList.add('hidden');
+        document.getElementById('lightModeToggle').classList.remove('hidden');
+      } else {
+        document.getElementById('darkModeToggle').classList.remove('hidden');
+        document.getElementById('lightModeToggle').classList.add('hidden');
+      }
+      
+      localStorage.setItem('theme', theme);
+    }
+    
+    // Initialize theme
+    applyTheme(getInitialTheme());
+    
+    // Add event listeners for toggle buttons
+    document.getElementById('darkModeToggle').addEventListener('click', () => applyTheme('dark'));
+    document.getElementById('lightModeToggle').addEventListener('click', () => applyTheme('light'));
   </script>
 </body>
 </html>
