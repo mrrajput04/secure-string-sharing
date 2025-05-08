@@ -58,6 +58,18 @@
             <input type="password" class="form-control" id="password" required>
             <div class="form-text">Anyone with this password will be able to access your string.</div>
           </div>
+          <div class="mb-3">
+            <label for="expiration" class="form-label">Expiration Time</label>
+            <select class="form-select" id="expiration">
+              <option value="">Never expires</option>
+              <option value="1">1 hour</option>
+              <option value="24">24 hours</option>
+              <option value="72">3 days</option>
+              <option value="168">7 days</option>
+              <option value="720">30 days</option>
+            </select>
+            <div class="form-text">After this time, the string will be automatically deleted.</div>
+          </div>
           <button type="submit" class="btn btn-primary">Generate Secure Link</button>
         </form>
         
@@ -69,6 +81,7 @@
               <input type="text" id="shareLink" class="form-control" readonly>
               <button class="btn btn-outline-secondary" type="button" id="copyBtn">Copy</button>
             </div>
+            <p id="expirationInfo"></p>
             <p class="mb-0"><strong>Remember:</strong> They will need the password to view the content.</p>
           </div>
         </div>
