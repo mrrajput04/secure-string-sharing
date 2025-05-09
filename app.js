@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const bodyParser = require('body-parser');
 const path = require('path');
 const QRCode = require('qrcode');
+const helmet = require('helmet');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -28,6 +29,9 @@ const rateLimiter = {
 function generateId() {
   return crypto.randomBytes(8).toString('hex');
 }
+
+// Use Helmet to secure HTTP headers
+app.use(helmet());
 
 // Encrypt string with password
 function encryptString(text, password) {
@@ -309,7 +313,7 @@ app.post('/api/strings', async (req, res) => {
   }
 
   const id = generateId();
-  
+
   // Handle markdown formatting if specified
   let processedString = string;
   if (format === 'markdown') {
@@ -336,7 +340,7 @@ app.post('/api/strings', async (req, res) => {
 
   try {
     const qrCode = await generateCustomQR(shareUrl, qrStyle);
-    
+
     // Generate social share links
     const socialLinks = {
       twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}`,
@@ -355,5 +359,15 @@ app.post('/api/strings', async (req, res) => {
   } catch (error) {
     console.error('QR Code generation error:', error);
     res.status(500).json({ error: 'Failed to generate QR code' });
+  }
+});
+
+app.post('/api/generate-qr', async (req, res) => {
+  const { url } = req.body;
+  try {
+    const qrCodeDataUrl = await QRCode.toDataURL(url);
+    res.json({ success: true, qrCodeDataUrl });
+  } catch (error) {
+    res.json({ success: false, error: 'Failed to generate QR code' });
   }
 });

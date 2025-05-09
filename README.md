@@ -17,6 +17,19 @@ This is a simple Node.js application that allows users to securely share private
 - Responsive design that works on mobile and desktop
 - Markdown editor with preview support
 
+## Favicon and Web Manifest
+
+The application includes a favicon and a web manifest for enhanced user experience on mobile devices. The favicon is available in multiple sizes to support different devices, and the web manifest provides metadata for the application.
+
+- **Favicon**: Located in the `public/favicon` directory, the favicon is available in various sizes including 192x192 and 512x512 pixels.
+- **Web Manifest**: The `site.webmanifest` file in the `public/favicon` directory contains the following properties:
+  - `name`: "Secure File Sharing"
+  - `short_name`: "SecureShare"
+  - `icons`: Array of icon objects with `src`, `sizes`, and `type` attributes.
+  - `theme_color`: "#3498db"
+  - `background_color`: "#ffffff"
+  - `display`: "standalone"
+
 ## Installation
 
 1. Clone this repository or download the files
