@@ -8,6 +8,7 @@ This is a simple Node.js application that allows users to securely share private
 - AES-256-GCM encryption for maximum security
 - String expiration options (1 hour, 24 hours, 3 days, 7 days, 30 days)
 - Rate limiting to prevent brute-force attacks
+- QR code generation for easy mobile sharing
 - Simple and intuitive user interface
 - Copy functionality for easy sharing
 - Responsive design that works on mobile and desktop
@@ -26,6 +27,13 @@ npm install
 
 5. Create a `public` folder in the root directory
 6. Move the HTML files (`index.html` and `view.html`) to the `public` folder
+
+## Dependencies
+
+- express - Web server framework
+- body-parser - Request parsing middleware
+- qrcode - QR code generation
+- crypto (built-in) - Cryptographic functionality
 
 ## Usage
 

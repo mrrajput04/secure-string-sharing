@@ -82,6 +82,13 @@
               <button class="btn btn-outline-secondary" type="button" id="copyBtn">Copy</button>
             </div>
             <p id="expirationInfo"></p>
+            <div class="mb-3 text-center">
+              <p><strong>Or scan this QR code:</strong></p>
+              <div id="qrCodeContainer">
+                <img id="qrCode" class="img-fluid border rounded" style="max-width: 200px;" />
+              </div>
+              <button id="downloadQrBtn" class="btn btn-sm btn-outline-primary mt-2">Download QR Code</button>
+            </div>
             <p class="mb-0"><strong>Remember:</strong> They will need the password to view the content.</p>
           </div>
         </div>
@@ -124,6 +131,26 @@
           } else {
             document.getElementById('expirationInfo').innerHTML = '';
           }
+          
+          // Display QR code if available
+          if (data.qrCode) {
+            document.getElementById('qrCode').src = data.qrCode;
+            document.getElementById('qrCodeContainer').classList.remove('hidden');
+            
+            // Setup download QR button
+            const downloadQrBtn = document.getElementById('downloadQrBtn');
+            downloadQrBtn.addEventListener('click', () => {
+              const link = document.createElement('a');
+              link.href = data.qrCode;
+              link.download = `secure-string-${data.id}.png`;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+            });
+          } else {
+            document.getElementById('qrCodeContainer').classList.add('hidden');
+          }
+          
         } else {
           alert('Error: ' + data.error);
         }
