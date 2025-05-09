@@ -17,6 +17,7 @@
     "marked": "^15.0.11",
     "multer": "^1.4.5-lts.2",
     "qrcode": "^1.5.0",
+    "sharp": "^0.34.1",
     "showdown": "^2.1.0",
     "simplemde": "^1.11.2",
     "social-share-button": "^3.1.0",

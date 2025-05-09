@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Background -->
+  <rect x="0" y="0" width="64" height="64" rx="12" fill="#3498db" />
+  
+  <!-- File -->
+  <path d="M42,16 L28,16 L18,26 L18,48 L46,48 L46,16 Z" fill="#ffffff" />
+  <path d="M28,16 L28,26 L18,26" fill="#e6e6e6" />
+  
+  <!-- Lock -->
+  <rect x="27" y="30" width="10" height="12" rx="1" fill="#2c3e50" />
+  <rect x="24" y="26" width="16" height="8" rx="4" fill="#2c3e50" />
+  <circle cx="32" cy="36" r="2" fill="#ffffff" />
+  <path d="M32,36 L32,40" stroke="#ffffff" stroke-width="2" stroke-linecap="round" />
+  
+  <!-- Shield overlay -->
+  <path d="M32,10 C28,14 22,16 16,16 C16,28 16,36 32,46 C48,36 48,28 48,16 C42,16 36,14 32,10 Z" fill="#3498db" fill-opacity="0.2" stroke="#2980b9" stroke-width="1.5" />
+</svg>
