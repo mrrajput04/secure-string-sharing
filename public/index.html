@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Secure String Sharing</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon/favicon.svg">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/styles/default.min.css">
     <link rel="stylesheet" href="/css/themes.css">
@@ -107,6 +109,34 @@
             background-color: var(--bg-color);
             color: var(--text-color);
         }
+
+        /* Add button styles */
+        .button-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .qr-code-button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            background-color: #007bff;
+            color: white;
+        }
+
+        .qr-code-button:hover {
+            opacity: 0.9;
+        }
+
+        .qr-code-button i {
+            font-size: 18px;
+        }
     </style>
 </head>
 <body>
@@ -136,10 +166,16 @@
 
         <div class="share-options">
             <h3>Share Options</h3>
-            <button class="copy-url-button" onclick="copyToClipboard()">
-                <i class="fas fa-copy"></i>
-                Copy URL
-            </button>
+            <div class="button-container">
+                <button class="copy-url-button" onclick="copyToClipboard()">
+                    <i class="fas fa-copy"></i>
+                    Copy URL
+                </button>
+                <button class="qr-code-button" onclick="generateQRCode()">
+                    <i class="fas fa-qrcode"></i>
+                    Generate QR Code
+                </button>
+            </div>
             <div class="social-share-buttons">
                 <button class="share-button twitter" onclick="shareOnSocial('twitter')">
                     <i class="fab fa-twitter"></i>
@@ -154,6 +190,7 @@
                     LinkedIn
                 </button>
             </div>
+            <div id="qr-code-display"></div>
         </div>
     </div>
 
@@ -223,3 +260,16 @@
     </script>
 </body>
 </html>
+<script>
+    function generateQRCode() {
+        const url = window.location.href; // or any string you want to generate QR code for
+        QRCode.toDataURL(url, { errorCorrectionLevel: 'H', margin: 1, width: 300 }, (err, qrDataUrl) => {
+            if (err) {
+                console.error('QR Code generation error:', err);
+                alert('Failed to generate QR code');
+                return;
+            }
+            document.getElementById('qr-code-display').innerHTML = `<img src="${qrDataUrl}" alt="QR Code">`;
+        });
+    }
+</script>
