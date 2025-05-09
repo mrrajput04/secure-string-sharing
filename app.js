@@ -364,6 +364,15 @@ function rateLimit(req, res, next) {
         const converter = new showdown.Converter();
         processedString = converter.makeHtml(string);
       }
+      const id = generateId();
+
+      // Handle markdown formatting if specified
+      let processedString = string;
+      if (format === 'markdown') {
+        const showdown = require('showdown');
+        const converter = new showdown.Converter();
+        processedString = converter.makeHtml(string);
+      }
 
       const encryptedData = encryptString(processedString, password);
 
@@ -390,17 +399,26 @@ function rateLimit(req, res, next) {
           facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
           linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`
         };
+        try {
+          const qrCode = await generateCustomQR(shareUrl, qrStyle);
 
-        res.json({
-          success: true,
-          id,
-          expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
-          shareUrl,
-          qrCode,
-          socialLinks
-        });
-      } catch (error) {
-        console.error('QR Code generation error:', error);
-        res.status(500).json({ error: 'Failed to generate QR code' });
-      }
-    });
+          // Generate social share links
+          const socialLinks = {
+            twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}`,
+            facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
+            linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`
+          };
+
+          res.json({
+            success: true,
+            id,
+            expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
+            shareUrl,
+            qrCode,
+            socialLinks
+          });
+        } catch (error) {
+          console.error('QR Code generation error:', error);
+          res.status(500).json({ error: 'Failed to generate QR code' });
+        }
+      });
