@@ -8,9 +8,9 @@
 }
 
 [data-theme="dark"] {
-    --bg-color: #1a1a1a;
-    --text-color: #ffffff;
-    --border-color: #444444;
+    --bg-color: #3a3a3a; /* Lighter grey for dark mode background */
+    --text-color: #e0e0e0; /* Slightly darker text for contrast */
+    --border-color: #555555;
     --primary-color: #0d6efd;
     --secondary-color: #6c757d;
 }
