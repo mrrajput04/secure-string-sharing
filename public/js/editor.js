@@ -7,10 +7,11 @@ class SecureEditor {
       toolbar: [
         'bold', 'italic', 'heading', '|',
         'quote', 'unordered-list', 'ordered-list', '|',
-        'link', 'image', '|',
+        'link', 'image', 'video', '|',  // Added video option
         'preview', 'side-by-side', 'fullscreen', '|',
         'guide'
-      ]
+      ],
+      uploadFunction: this.handleMediaUpload.bind(this)  // Added upload handler
     });
 
     this.setupThemeSelector();
@@ -43,5 +44,25 @@ class SecureEditor {
 
   setContent(content) {
     this.editor.value(content);
+  }
+
+  async handleMediaUpload(file, onSuccess, onError) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch('/api/upload-media', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await response.json();
+      if (data.success) {
+        onSuccess(data.url);
+      } else {
+        onError(data.error || 'Upload failed');
+      }
+    } catch (error) {
+      onError('Network error');
+    }
   }
 }

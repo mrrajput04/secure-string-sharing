@@ -31,13 +31,16 @@
         <form id="secure-string-form">
             <div class="form-group">
                 <label for="secret-input">Enter your secret string:</label>
-                <textarea id="secret-input" class="form-control" rows="4" required></textarea>
+                <textarea id="secret-input" class="form-control" rows="4"></textarea>
             </div>
             <div class="form-group">
                 <label for="password-input">Password:</label>
                 <input type="password" id="password-input" class="form-control" required>
             </div>
-            <!-- Expiration Time Selector -->
+            <div class="form-group">
+                <label for="file-input">Or upload a file:</label>
+                <input type="file" id="file-input" class="form-control">
+            </div>
             <div class="form-group">
                 <label for="expiration-select">Expiration Time:</label>
                 <select id="expiration-select" class="form-control" required>
@@ -69,41 +72,42 @@
         // JavaScript logic for form submission
         document.getElementById('secure-string-form').addEventListener('submit', async function(e) {
             e.preventDefault();
-            const secret = document.getElementById('secret-input').value.trim();
+            const fileInput = document.getElementById('file-input');
             const password = document.getElementById('password-input').value.trim();
             const expiration = document.getElementById('expiration-select').value;
-            if (!secret || !password || !expiration) {
+            
+            if (!password || !expiration) {
                 alert('Please enter all required fields.');
                 return;
             }
-            const res = await fetch('/api/strings', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ string: secret, password, expiration })
-            });
-            const data = await res.json();
-            if (data.success && data.shareUrl) {
-                console.log('Generated URL:', data.shareUrl); // Log the URL
-                document.getElementById('generated-link').innerHTML = 
-                    `<strong>Share this link:</strong> <a href="${data.shareUrl}" target="_blank">${data.shareUrl}</a>`;
-                
-                // Generate QR code
-                const qrRes = await fetch('/api/generate-qr', {
+        
+            const formData = new FormData();
+            if (fileInput.files.length > 0) {
+                formData.append('file', fileInput.files[0]);
+            }
+            formData.append('password', password);
+            formData.append('expiration', expiration);
+        
+            try {
+                const res = await fetch('/api/files', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url: data.shareUrl })
+                    body: formData
                 });
-                const qrData = await qrRes.json();
-                if (qrData.success) {
-                    document.getElementById('qr-code-display').innerHTML = 
-                        `<img src="${qrData.qrCodeDataUrl}" alt="QR Code" />`;
+                const data = await res.json();
+                if (data.success && data.shareUrl) {
+                    document.getElementById('generated-link').innerHTML = 
+                        `<strong>Share this link:</strong> <a href="${data.shareUrl}" target="_blank">${data.shareUrl}</a>`;
                 } else {
-                    document.getElementById('qr-code-display').innerHTML = 
-                        `<span style="color:red;">Failed to generate QR code</span>`;
+                    document.getElementById('generated-link').innerHTML = 
+                        `<span style="color:red;">Failed to generate link: ${data.error || 'Unknown error'}</span>`;
+                    if (data.details) {
+                        console.error('Error details:', data.details);
+                    }
                 }
-            } else {
+            } catch (error) {
+                console.error('Network error:', error);
                 document.getElementById('generated-link').innerHTML = 
-                    `<span style="color:red;">Failed to generate link: ${data.error || 'Unknown error'}</span>`;
+                    `<span style="color:red;">Network error occurred while processing your request</span>`;
             }
         });
 

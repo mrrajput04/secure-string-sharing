@@ -6,6 +6,7 @@ const path = require('path');
 const QRCode = require('qrcode');
 const helmet = require('helmet');
 const fs = require('fs');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -32,6 +33,20 @@ function generateId() {
 }
 
 // Use Helmet to secure HTTP headers
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:', 'blob:'],
+      connectSrc: ["'self'"],
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"]
+    }
+  }
+}));
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -131,7 +146,6 @@ function rateLimit(req, res, next) {
   app.post('/api/strings', (req, res) => {
     const { string, password, expiration } = req.body;
 
-
     if (!string || !password) {
       return res.status(400).json({ error: 'String and password are required' });
     }
@@ -208,7 +222,6 @@ function rateLimit(req, res, next) {
         return res.status(404).json({ error: 'String not found or has expired' });
       }
 
-
       // Check if string has expired
       if (encryptedData.expiresAt && encryptedData.expiresAt < Date.now()) {
         delete secretStrings[id];
@@ -254,6 +267,7 @@ function rateLimit(req, res, next) {
           delete rateLimiter.attempts[ip];
         }
 
+
         res.json({ success: true, string: decrypted });
       });
 
@@ -273,19 +287,42 @@ function rateLimit(req, res, next) {
 
     // Add multer for file handling
     const multer = require('multer');
-    const upload = multer({
-      limits: {
-        fileSize: 10 * 1024 * 1024, // 10MB limit
+
+    // Configure multer for file uploads
+    const storage = multer.diskStorage({
+      destination: (req, file, cb) => {
+        cb(null, path.join(__dirname, 'public', 'uploads'));
       },
+      filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, uniqueSuffix + path.extname(file.originalname));
+      }
+    });
+
+    const upload = multer({
+      storage,
+      limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
       fileFilter: (req, file, cb) => {
-        // Add allowed file types
-        const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf', 'text/plain'];
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'video/mp4'];
         if (allowedTypes.includes(file.mimetype)) {
           cb(null, true);
         } else {
           cb(new Error('Invalid file type'));
         }
       }
+    });
+
+    // Add media upload endpoint
+    app.post('/api/upload-media', upload.single('file'), (req, res) => {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const fileUrl = `/uploads/${req.file.filename}`;
+      res.json({
+        success: true,
+        url: fileUrl
+      });
     });
 
     // API to upload and encrypt file
@@ -296,8 +333,10 @@ function rateLimit(req, res, next) {
           return res.status(400).json({ error: 'File and password are required' });
         }
 
+        // Read file content properly
+        const fileContent = await fs.promises.readFile(req.file.path);
         const id = generateId();
-        const encryptedData = encryptString(req.file.buffer.toString('base64'), password);
+        const encryptedData = encryptString(fileContent.toString('base64'), password);
 
         let expiresAt = null;
         if (expiration && !isNaN(expiration)) {
@@ -321,7 +360,8 @@ function rateLimit(req, res, next) {
           shareUrl
         });
       } catch (error) {
-        res.status(500).json({ error: 'File upload failed' });
+        console.error('File upload error:', error);
+        res.status(500).json({ error: 'File upload failed', details: error.message });
       }
     });
 
