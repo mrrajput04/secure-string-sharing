@@ -18,23 +18,32 @@
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="card shadow">
-      <div class="card-header bg-primary text-white">
-        <h1 class="h4 mb-0">Create Secure Shared String</h1>
-      </div>
-      <div class="card-body">
-        <form id="createForm">
-          <div class="mb-3">
-            <label for="secretString" class="form-label">Secret String/Message</label>
-            <textarea class="form-control" id="secretString" rows="5" required></textarea>
-          </div>
-          <div class="mb-3">
-            <label for="password" class="form-label">Protection Password</label>
-            <input type="password" class="form-control" id="password" required>
-            <div class="form-text">Anyone with this password will be able to access your string.</div>
-          </div>
-          <button type="submit" class="btn btn-primary">Generate Secure Link</button>
+    <div class="container">
+        <h1 class="text-center">Secure String Sharing</h1>
+        <form id="secure-string-form">
+            <div class="form-group">
+                <label for="secret-input">Enter your secret string:</label>
+                <textarea id="secret-input" class="form-control" rows="4"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="password-input">Password:</label>
+                <input type="password" id="password-input" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="file-input">Or upload a file:</label>
+                <input type="file" id="file-input" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="expiration-select">Expiration Time:</label>
+                <select id="expiration-select" class="form-control" required>
+                    <option value="3600">1 Hour</option>
+                    <option value="86400">24 Hours</option>
+                    <option value="259200">3 Days</option>
+                    <option value="604800">7 Days</option>
+                    <option value="2592000">30 Days</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Generate Secure Link</button>
         </form>
         
         <div id="resultSection" class="mt-4 hidden">
@@ -50,51 +59,64 @@
         </div>
       </div>
     </div>
-  </div>
-
-  <script>
-    document.getElementById('createForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      const string = document.getElementById('secretString').value;
-      const password = document.getElementById('password').value;
-      
-      try {
-        const response = await fetch('/api/strings', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ string, password }),
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        // JavaScript logic for form submission
+        document.getElementById('secure-string-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const fileInput = document.getElementById('file-input');
+            const password = document.getElementById('password-input').value.trim();
+            const expiration = document.getElementById('expiration-select').value;
+            
+            if (!password || !expiration) {
+                alert('Please enter all required fields.');
+                return;
+            }
+        
+            const formData = new FormData();
+            if (fileInput.files.length > 0) {
+                formData.append('file', fileInput.files[0]);
+            }
+            formData.append('password', password);
+            formData.append('expiration', expiration);
+        
+            try {
+                const res = await fetch('/api/files', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success && data.shareUrl) {
+                    document.getElementById('generated-link').innerHTML = 
+                        `<strong>Share this link:</strong> <a href="${data.shareUrl}" target="_blank">${data.shareUrl}</a>`;
+                } else {
+                    document.getElementById('generated-link').innerHTML = 
+                        `<span style="color:red;">Failed to generate link: ${data.error || 'Unknown error'}</span>`;
+                    if (data.details) {
+                        console.error('Error details:', data.details);
+                    }
+                }
+            } catch (error) {
+                console.error('Network error:', error);
+                document.getElementById('generated-link').innerHTML = 
+                    `<span style="color:red;">Network error occurred while processing your request</span>`;
+            }
         });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-          document.getElementById('shareLink').value = data.shareUrl;
-          document.getElementById('resultSection').classList.remove('hidden');
-        } else {
-          alert('Error: ' + data.error);
+
+        // Theme switching function
+        function changeTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('preferred-theme', theme);
         }
-      } catch (error) {
-        alert('An error occurred. Please try again.');
-        console.error(error);
-      }
-    });
-    
-    document.getElementById('copyBtn').addEventListener('click', () => {
-      const linkInput = document.getElementById('shareLink');
-      linkInput.select();
-      document.execCommand('copy');
-      
-      const copyBtn = document.getElementById('copyBtn');
-      const originalText = copyBtn.textContent;
-      copyBtn.textContent = 'Copied!';
-      
-      setTimeout(() => {
-        copyBtn.textContent = originalText;
-      }, 2000);
-    });
-  </script>
+
+        // Load saved theme on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('preferred-theme') || 'light';
+            changeTheme(savedTheme);
+        });
+    </script>
 </body>
 </html>
