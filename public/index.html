@@ -1,212 +1,225 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="light">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Secure String Sharing</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    body {
-      padding-top: 50px;
-      transition: background-color 0.3s ease;
-    }
-    .container {
-      max-width: 800px;
-    }
-    .hidden {
-      display: none;
-    }
-    .theme-toggle {
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      z-index: 1000;
-    }
-    .dark-mode-icon, .light-mode-icon {
-      cursor: pointer;
-      font-size: 1.5rem;
-      padding: 5px;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background-color: rgba(0,0,0,0.1);
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure String Sharing</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/styles/default.min.css">
+    <link rel="stylesheet" href="/css/themes.css">
+    <style>
+        /* Add responsive design styles */
+        @media (max-width: 768px) {
+            .container {
+                width: 95%;
+                margin: 0 auto;
+            }
+            
+            .editor-toolbar {
+                flex-wrap: wrap;
+            }
+        }
+
+        /* Add social share button styles */
+        .social-share-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .share-button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            transition: opacity 0.2s;
+        }
+
+        .share-button:hover {
+            opacity: 0.9;
+        }
+
+        .share-button.twitter {
+            background-color: #1DA1F2;
+            color: white;
+        }
+
+        .share-button.facebook {
+            background-color: #4267B2;
+            color: white;
+        }
+
+        .share-button.linkedin {
+            background-color: #0077b5;
+            color: white;
+        }
+
+        .share-button i {
+            font-size: 18px;
+        }
+
+        /* Add copy URL button styles */
+        .copy-url-button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            background-color: #6c757d;
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        .copy-url-button:hover {
+            opacity: 0.9;
+        }
+
+        .copy-url-button i {
+            font-size: 18px;
+        }
+
+        .copy-success {
+            background-color: #28a745 !important;
+            transition: background-color 0.3s ease;
+        }
+
+        /* Theme selector styles */
+        .theme-selector {
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .theme-selector select {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+    </style>
 </head>
 <body>
-  <div class="theme-toggle">
-    <div class="dark-mode-icon" id="darkModeToggle">🌙</div>
-    <div class="light-mode-icon hidden" id="lightModeToggle">☀️</div>
-  </div>
-  
-  <div class="container">
-    <div class="card shadow">
-      <div class="card-header bg-primary text-white">
-        <h1 class="h4 mb-0">Create Secure Shared String</h1>
-      </div>
-      <div class="card-body">
-        <form id="createForm">
-          <div class="mb-3">
-            <label for="secretString" class="form-label">Secret String/Message</label>
-            <textarea class="form-control" id="secretString" rows="5" required></textarea>
-          </div>
-          <div class="mb-3">
-            <label for="password" class="form-label">Protection Password</label>
-            <input type="password" class="form-control" id="password" required>
-            <div class="form-text">Anyone with this password will be able to access your string.</div>
-          </div>
-          <div class="mb-3">
-            <label for="expiration" class="form-label">Expiration Time</label>
-            <select class="form-select" id="expiration">
-              <option value="">Never expires</option>
-              <option value="1">1 hour</option>
-              <option value="24">24 hours</option>
-              <option value="72">3 days</option>
-              <option value="168">7 days</option>
-              <option value="720">30 days</option>
+    <div class="container">
+        <h1>Secure String Sharing</h1>
+        
+        <!-- Add theme selector -->
+        <div class="theme-selector">
+            <label for="theme-select">Choose Theme: </label>
+            <select id="theme-select" onchange="changeTheme(this.value)">
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+                <option value="ocean">Ocean</option>
+                <option value="forest">Forest</option>
             </select>
-            <div class="form-text">After this time, the string will be automatically deleted.</div>
-          </div>
-          <button type="submit" class="btn btn-primary">Generate Secure Link</button>
-        </form>
-        
-        <div id="resultSection" class="mt-4 hidden">
-          <div class="alert alert-success">
-            <h5>Your secure string has been created!</h5>
-            <p>Share this link with anyone you want to access the string:</p>
-            <div class="input-group mb-3">
-              <input type="text" id="shareLink" class="form-control" readonly>
-              <button class="btn btn-outline-secondary" type="button" id="copyBtn">Copy</button>
-            </div>
-            <p id="expirationInfo"></p>
-            <div class="mb-3 text-center">
-              <p><strong>Or scan this QR code:</strong></p>
-              <div id="qrCodeContainer">
-                <img id="qrCode" class="img-fluid border rounded" style="max-width: 200px;" />
-              </div>
-              <button id="downloadQrBtn" class="btn btn-sm btn-outline-primary mt-2">Download QR Code</button>
-            </div>
-            <p class="mb-0"><strong>Remember:</strong> They will need the password to view the content.</p>
-          </div>
         </div>
-      </div>
-    </div>
-  </div>
+        <div id="editor-container">
+            <textarea id="secure-editor"></textarea>
+        </div>
+        
+        <div class="qr-customization">
+            <h3>QR Code Customization</h3>
+            <input type="color" id="qr-color" value="#000000">
+            <input type="color" id="qr-bg-color" value="#ffffff">
+            <input type="number" id="qr-size" value="300" min="100" max="1000">
+        </div>
 
-  <script>
-    document.getElementById('createForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      const string = document.getElementById('secretString').value;
-      const password = document.getElementById('password').value;
-      
-      try {
-        const response = await fetch('/api/strings', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ 
-            string, 
-            password,
-            expiration: document.getElementById('expiration').value
-          }),
-        });
+        <div class="share-options">
+            <h3>Share Options</h3>
+            <button class="copy-url-button" onclick="copyToClipboard()">
+                <i class="fas fa-copy"></i>
+                Copy URL
+            </button>
+            <div class="social-share-buttons">
+                <button class="share-button twitter" onclick="shareOnSocial('twitter')">
+                    <i class="fab fa-twitter"></i>
+                    Twitter
+                </button>
+                <button class="share-button facebook" onclick="shareOnSocial('facebook')">
+                    <i class="fab fa-facebook-f"></i>
+                    Facebook
+                </button>
+                <button class="share-button linkedin" onclick="shareOnSocial('linkedin')">
+                    <i class="fab fa-linkedin-in"></i>
+                    LinkedIn
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="/js/editor.js"></script>
+    <script>
+        // Initialize the secure editor
+        const editor = new SecureEditor('secure-editor');
         
-        const data = await response.json();
+        // Load saved theme preference
+        const savedTheme = localStorage.getItem('preferred-theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
         
-        if (data.success) {
-          document.getElementById('shareLink').value = data.shareUrl;
-          document.getElementById('resultSection').classList.remove('hidden');
-          
-          // Show expiration info if applicable
-          if (data.expiresAt) {
-            const expirationDate = new Date(data.expiresAt);
-            const expirationInfo = document.getElementById('expirationInfo');
-            expirationInfo.innerHTML = `<strong>Expires on:</strong> ${expirationDate.toLocaleString()}`;
-            expirationInfo.classList.add('text-warning');
-          } else {
-            document.getElementById('expirationInfo').innerHTML = '';
-          }
-          
-          // Display QR code if available
-          if (data.qrCode) {
-            document.getElementById('qrCode').src = data.qrCode;
-            document.getElementById('qrCodeContainer').classList.remove('hidden');
+        // Updated social share function
+        function shareOnSocial(network) {
+            const url = encodeURIComponent(window.location.href);
+            const title = encodeURIComponent('Check out this secure shared content!');
             
-            // Setup download QR button
-            const downloadQrBtn = document.getElementById('downloadQrBtn');
-            downloadQrBtn.addEventListener('click', () => {
-              const link = document.createElement('a');
-              link.href = data.qrCode;
-              link.download = `secure-string-${data.id}.png`;
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-            });
-          } else {
-            document.getElementById('qrCodeContainer').classList.add('hidden');
-          }
-          
-        } else {
-          alert('Error: ' + data.error);
+            const shareUrls = {
+                twitter: `https://twitter.com/intent/tweet?url=${url}&text=${title}`,
+                facebook: `https://www.facebook.com/sharer/sharer.php?u=${url}`,
+                linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${url}`
+            };
+            
+            window.open(shareUrls[network], '_blank', 'width=600,height=400');
         }
-      } catch (error) {
-        alert('An error occurred. Please try again.');
-        console.error(error);
-      }
-    });
-    
-    document.getElementById('copyBtn').addEventListener('click', () => {
-      const linkInput = document.getElementById('shareLink');
-      linkInput.select();
-      document.execCommand('copy');
-      
-      const copyBtn = document.getElementById('copyBtn');
-      const originalText = copyBtn.textContent;
-      copyBtn.textContent = 'Copied!';
-      
-      setTimeout(() => {
-        copyBtn.textContent = originalText;
-      }, 2000);
-    });
-  </script>
-  
-  <!-- Dark mode script -->
-  <script>
-    // Check for saved theme preference or use the system preference
-    function getInitialTheme() {
-      const savedTheme = localStorage.getItem('theme');
-      if (savedTheme) {
-        return savedTheme;
-      }
-      return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
-    
-    // Apply theme to page
-    function applyTheme(theme) {
-      document.documentElement.setAttribute('data-bs-theme', theme);
-      
-      if (theme === 'dark') {
-        document.getElementById('darkModeToggle').classList.add('hidden');
-        document.getElementById('lightModeToggle').classList.remove('hidden');
-      } else {
-        document.getElementById('darkModeToggle').classList.remove('hidden');
-        document.getElementById('lightModeToggle').classList.add('hidden');
-      }
-      
-      localStorage.setItem('theme', theme);
-    }
-    
-    // Initialize theme
-    applyTheme(getInitialTheme());
-    
-    // Add event listeners for toggle buttons
-    document.getElementById('darkModeToggle').addEventListener('click', () => applyTheme('dark'));
-    document.getElementById('lightModeToggle').addEventListener('click', () => applyTheme('light'));
-  </script>
+        
+        // Add copy to clipboard function
+        function copyToClipboard() {
+            const url = window.location.href;
+            navigator.clipboard.writeText(url).then(() => {
+                const copyButton = document.querySelector('.copy-url-button');
+                copyButton.classList.add('copy-success');
+                copyButton.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                
+                setTimeout(() => {
+                    copyButton.classList.remove('copy-success');
+                    copyButton.innerHTML = '<i class="fas fa-copy"></i> Copy URL';
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy URL:', err);
+                alert('Failed to copy URL to clipboard');
+            });
+        }
+        
+        // Theme switching function
+        function changeTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('preferred-theme', theme);
+            document.getElementById('theme-select').value = theme;
+            
+            // Apply theme to editor container and content
+            const editorContainer = document.getElementById('editor-container');
+            if (editorContainer) {
+                editorContainer.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--bg-color');
+                editorContainer.style.color = getComputedStyle(document.documentElement).getPropertyValue('--text-color');
+            }
+        }
+
+        // Load saved theme on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('preferred-theme') || 'light';
+            changeTheme(savedTheme);
+        });
+    </script>
 </body>
 </html>
