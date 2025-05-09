@@ -142,11 +142,32 @@ app.post('/api/strings', (req, res) => {
     createdAt: Date.now()
   };
 
-  res.json({
-    success: true,
-    id,
-    expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
-    shareUrl: `${req.protocol}://${req.get('host')}/view/${id}`
+  const shareUrl = `${req.protocol}://${req.get('host')}/view/${id}`;
+
+  // Generate QR Code
+  QRCode.toDataURL(shareUrl, {
+    errorCorrectionLevel: 'H',
+    margin: 1,
+    width: 300
+  }, (err, qrDataUrl) => {
+    if (err) {
+      console.error('QR Code generation error:', err);
+      // Still return success with URL even if QR fails
+      return res.json({
+        success: true,
+        id,
+        expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
+        shareUrl
+      });
+    }
+
+    res.json({
+      success: true,
+      id,
+      expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
+      shareUrl,
+      qrCode: qrDataUrl
+    });
   });
 });
 

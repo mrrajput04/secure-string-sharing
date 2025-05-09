@@ -82,69 +82,131 @@
               <button class="btn btn-outline-secondary" type="button" id="copyBtn">Copy</button>
             </div>
             <p id="expirationInfo"></p>
+            <div class="mb-3 text-center">
+              <p><strong>Or scan this QR code:</strong></p>
+              <div id="qrCodeContainer">
+                <img id="qrCode" class="img-fluid border rounded" style="max-width: 200px;" />
+              </div>
+              <button id="downloadQrBtn" class="btn btn-sm btn-outline-primary mt-2">Download QR Code</button>
+            </div>
             <p class="mb-0"><strong>Remember:</strong> They will need the password to view the content.</p>
           </div>
         </div>
       </div>
     </div>
-    <!-- Bootstrap JS and dependencies -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script>
-        // JavaScript logic for form submission
-        document.getElementById('secure-string-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const fileInput = document.getElementById('file-input');
-            const password = document.getElementById('password-input').value.trim();
-            const expiration = document.getElementById('expiration-select').value;
+  </div>
+
+  <script>
+    document.getElementById('createForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const string = document.getElementById('secretString').value;
+      const password = document.getElementById('password').value;
+      
+      try {
+        const response = await fetch('/api/strings', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            string, 
+            password,
+            expiration: document.getElementById('expiration').value
+          }),
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          document.getElementById('shareLink').value = data.shareUrl;
+          document.getElementById('resultSection').classList.remove('hidden');
+          
+          // Show expiration info if applicable
+          if (data.expiresAt) {
+            const expirationDate = new Date(data.expiresAt);
+            const expirationInfo = document.getElementById('expirationInfo');
+            expirationInfo.innerHTML = `<strong>Expires on:</strong> ${expirationDate.toLocaleString()}`;
+            expirationInfo.classList.add('text-warning');
+          } else {
+            document.getElementById('expirationInfo').innerHTML = '';
+          }
+          
+          // Display QR code if available
+          if (data.qrCode) {
+            document.getElementById('qrCode').src = data.qrCode;
+            document.getElementById('qrCodeContainer').classList.remove('hidden');
             
-            if (!password || !expiration) {
-                alert('Please enter all required fields.');
-                return;
-            }
-        
-            const formData = new FormData();
-            if (fileInput.files.length > 0) {
-                formData.append('file', fileInput.files[0]);
-            }
-            formData.append('password', password);
-            formData.append('expiration', expiration);
-        
-            try {
-                const res = await fetch('/api/files', {
-                    method: 'POST',
-                    body: formData
-                });
-                const data = await res.json();
-                if (data.success && data.shareUrl) {
-                    document.getElementById('generated-link').innerHTML = 
-                        `<strong>Share this link:</strong> <a href="${data.shareUrl}" target="_blank">${data.shareUrl}</a>`;
-                } else {
-                    document.getElementById('generated-link').innerHTML = 
-                        `<span style="color:red;">Failed to generate link: ${data.error || 'Unknown error'}</span>`;
-                    if (data.details) {
-                        console.error('Error details:', data.details);
-                    }
-                }
-            } catch (error) {
-                console.error('Network error:', error);
-                document.getElementById('generated-link').innerHTML = 
-                    `<span style="color:red;">Network error occurred while processing your request</span>`;
-            }
-        });
-
-        // Theme switching function
-        function changeTheme(theme) {
-            document.documentElement.setAttribute('data-theme', theme);
-            localStorage.setItem('preferred-theme', theme);
+            // Setup download QR button
+            const downloadQrBtn = document.getElementById('downloadQrBtn');
+            downloadQrBtn.addEventListener('click', () => {
+              const link = document.createElement('a');
+              link.href = data.qrCode;
+              link.download = `secure-string-${data.id}.png`;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+            });
+          } else {
+            document.getElementById('qrCodeContainer').classList.add('hidden');
+          }
+          
+        } else {
+          alert('Error: ' + data.error);
         }
-
-        // Load saved theme on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            const savedTheme = localStorage.getItem('preferred-theme') || 'light';
-            changeTheme(savedTheme);
-        });
-    </script>
+      } catch (error) {
+        alert('An error occurred. Please try again.');
+        console.error(error);
+      }
+    });
+    
+    document.getElementById('copyBtn').addEventListener('click', () => {
+      const linkInput = document.getElementById('shareLink');
+      linkInput.select();
+      document.execCommand('copy');
+      
+      const copyBtn = document.getElementById('copyBtn');
+      const originalText = copyBtn.textContent;
+      copyBtn.textContent = 'Copied!';
+      
+      setTimeout(() => {
+        copyBtn.textContent = originalText;
+      }, 2000);
+    });
+  </script>
+  
+  <!-- Dark mode script -->
+  <script>
+    // Check for saved theme preference or use the system preference
+    function getInitialTheme() {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme) {
+        return savedTheme;
+      }
+      return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    
+    // Apply theme to page
+    function applyTheme(theme) {
+      document.documentElement.setAttribute('data-bs-theme', theme);
+      
+      if (theme === 'dark') {
+        document.getElementById('darkModeToggle').classList.add('hidden');
+        document.getElementById('lightModeToggle').classList.remove('hidden');
+      } else {
+        document.getElementById('darkModeToggle').classList.remove('hidden');
+        document.getElementById('lightModeToggle').classList.add('hidden');
+      }
+      
+      localStorage.setItem('theme', theme);
+    }
+    
+    // Initialize theme
+    applyTheme(getInitialTheme());
+    
+    // Add event listeners for toggle buttons
+    document.getElementById('darkModeToggle').addEventListener('click', () => applyTheme('dark'));
+    document.getElementById('lightModeToggle').addEventListener('click', () => applyTheme('light'));
+  </script>
 </body>
 </html>
