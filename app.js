@@ -32,20 +32,7 @@ function generateId() {
 }
 
 // Use Helmet to secure HTTP headers
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", 'data:', 'blob:'],
-      connectSrc: ["'self'"],
-      fontSrc: ["'self'"],
-      objectSrc: ["'none'"],
-      mediaSrc: ["'self'"]
-    }
-  }
-}));
+
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -67,12 +54,9 @@ function encryptString(text, password) {
   const key = crypto.pbkdf2Sync(password, salt, 100000, 32, 'sha512');
   const iv = crypto.randomBytes(16);
   const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
-
-
   let encrypted = cipher.update(text, 'utf8', 'hex');
   encrypted += cipher.final('hex');
   const authTag = cipher.getAuthTag().toString('hex');
-
 
   return {
     salt: salt.toString('hex'),
@@ -90,8 +74,6 @@ function decryptString(encryptedData, password) {
     const iv = Buffer.from(encryptedData.iv, 'hex');
     const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
     decipher.setAuthTag(Buffer.from(encryptedData.authTag, 'hex'));
-
-
     let decrypted = decipher.update(encryptedData.encrypted, 'hex', 'utf8');
     decrypted += decipher.final('utf8');
     return decrypted;

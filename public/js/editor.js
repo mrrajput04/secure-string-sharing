@@ -21,7 +21,6 @@ class SecureEditor {
     const themes = ['light', 'dark', 'ocean', 'forest'];
     const selector = document.createElement('select');
     selector.id = 'theme-selector';
-
     themes.forEach(theme => {
       const option = document.createElement('option');
       option.value = theme;
