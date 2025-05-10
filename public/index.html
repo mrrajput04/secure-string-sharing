@@ -37,6 +37,10 @@
                 <label for="password-input">Password:</label>
                 <input type="password" id="password-input" class="form-control" required>
             </div>
+            <div class="form-group">
+                <label for="file-input">Or upload a file:</label>
+                <input type="file" id="file-input" class="form-control">
+            </div>
             <!-- Expiration Time Selector -->
             <div class="form-group">
                 <label for="expiration-select">Expiration Time:</label>
@@ -69,6 +73,42 @@
         // JavaScript logic for form submission
         document.getElementById('secure-string-form').addEventListener('submit', async function(e) {
             e.preventDefault();
+            const fileInput = document.getElementById('file-input');
+            const password = document.getElementById('password-input').value.trim();
+            const expiration = document.getElementById('expiration-select').value;
+            
+            if (!password || !expiration) {
+                alert('Please enter all required fields.');
+                return;
+            }
+        
+            const formData = new FormData();
+            if (fileInput.files.length > 0) {
+                formData.append('file', fileInput.files[0]);
+            }
+            formData.append('password', password);
+            formData.append('expiration', expiration);
+        
+            try {
+                const res = await fetch('/api/files', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success && data.shareUrl) {
+                    document.getElementById('generated-link').innerHTML = 
+                        `<strong>Share this link:</strong> <a href="${data.shareUrl}" target="_blank">${data.shareUrl}</a>`;
+                } else {
+                    document.getElementById('generated-link').innerHTML = 
+                        `<span style="color:red;">Failed to generate link: ${data.error || 'Unknown error'}</span>`;
+                    if (data.details) {
+                        console.error('Error details:', data.details);
+                    }
+                }
+            } catch (error) {
+                console.error('Network error:', error);
+                document.getElementById('generated-link').innerHTML = 
+                    `<span style="color:red;">Network error occurred while processing your request</span>`;
             const secret = document.getElementById('secret-input').value.trim();
             const password = document.getElementById('password-input').value.trim();
             const expiration = document.getElementById('expiration-select').value;
