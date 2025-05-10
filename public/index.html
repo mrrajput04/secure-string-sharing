@@ -31,7 +31,7 @@
         <form id="secure-string-form">
             <div class="form-group">
                 <label for="secret-input">Enter your secret string:</label>
-                <textarea id="secret-input" class="form-control" rows="4"></textarea>
+                <textarea id="secret-input" class="form-control" rows="4" required></textarea>
             </div>
             <div class="form-group">
                 <label for="password-input">Password:</label>
@@ -41,6 +41,7 @@
                 <label for="file-input">Or upload a file:</label>
                 <input type="file" id="file-input" class="form-control">
             </div>
+            <!-- Expiration Time Selector -->
             <div class="form-group">
                 <label for="expiration-select">Expiration Time:</label>
                 <select id="expiration-select" class="form-control" required>
@@ -108,6 +109,41 @@
                 console.error('Network error:', error);
                 document.getElementById('generated-link').innerHTML = 
                     `<span style="color:red;">Network error occurred while processing your request</span>`;
+            const secret = document.getElementById('secret-input').value.trim();
+            const password = document.getElementById('password-input').value.trim();
+            const expiration = document.getElementById('expiration-select').value;
+            if (!secret || !password || !expiration) {
+                alert('Please enter all required fields.');
+                return;
+            }
+            const res = await fetch('/api/strings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ string: secret, password, expiration })
+            });
+            const data = await res.json();
+            if (data.success && data.shareUrl) {
+                console.log('Generated URL:', data.shareUrl); // Log the URL
+                document.getElementById('generated-link').innerHTML = 
+                    `<strong>Share this link:</strong> <a href="${data.shareUrl}" target="_blank">${data.shareUrl}</a>`;
+                
+                // Generate QR code
+                const qrRes = await fetch('/api/generate-qr', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: data.shareUrl })
+                });
+                const qrData = await qrRes.json();
+                if (qrData.success) {
+                    document.getElementById('qr-code-display').innerHTML = 
+                        `<img src="${qrData.qrCodeDataUrl}" alt="QR Code" />`;
+                } else {
+                    document.getElementById('qr-code-display').innerHTML = 
+                        `<span style="color:red;">Failed to generate QR code</span>`;
+                }
+            } else {
+                document.getElementById('generated-link').innerHTML = 
+                    `<span style="color:red;">Failed to generate link: ${data.error || 'Unknown error'}</span>`;
             }
         });
 
