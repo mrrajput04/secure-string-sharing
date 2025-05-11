@@ -180,12 +180,21 @@
       <div class="card-body">
         <div id="passwordSection">
           <p>This link contains a secure string that requires a password to view.</p>
+          <div id="oneTimeWarning" class="alert alert-warning mb-3">
+            <i class="fas fa-exclamation-triangle"></i> Warning: This is a one-time viewing link. Once accessed, the content will be permanently deleted.
+          </div>
           <form id="accessForm">
             <div class="mb-3">
               <label for="password" class="form-label">Enter Password</label>
               <input type="password" class="form-control" id="password" required>
+              <div class="password-toggle mt-2">
+                <input type="checkbox" id="showPassword"> Show Password
+              </div>
             </div>
-            <button type="submit" class="btn btn-primary">Access String</button>
+            <button type="submit" class="btn btn-primary">
+              <span class="button-text">Access String</span>
+              <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+            </button>
           </form>
         </div>
         
@@ -215,8 +224,41 @@
   <script>
     const stringId = window.location.pathname.split('/').pop();
     
+    // Add rate limiting variables
+    const maxAttempts = 5;
+    const lockoutDuration = 300000; // 5 minutes in milliseconds
+    let attemptCount = 0;
+    let lastAttemptTime = 0;
+    let lockoutEndTime = 0;
+    
     document.getElementById('accessForm').addEventListener('submit', async (e) => {
       e.preventDefault();
+      
+      // If it's a one-time link, show confirmation
+      if (data.isOneTime && !confirm('This content can only be viewed once and will be permanently deleted after viewing. Are you sure you want to continue?')) {
+        return;
+      }
+      
+      // Show loading spinner
+      const submitButton = e.target.querySelector('button[type="submit"]');
+      const buttonText = submitButton.querySelector('.button-text');
+      const spinner = submitButton.querySelector('.spinner-border');
+      buttonText.classList.add('d-none');
+      spinner.classList.remove('d-none');
+      
+      // Check if user is in lockout period
+      const currentTime = Date.now();
+      if (currentTime < lockoutEndTime) {
+        const remainingTime = Math.ceil((lockoutEndTime - currentTime) / 1000);
+        document.getElementById('errorMessage').textContent = `Too many failed attempts. Please try again in ${remainingTime} seconds.`;
+        document.getElementById('errorSection').classList.remove('hidden');
+        return;
+      }
+      
+      // Reset attempt count if last attempt was more than lockout duration ago
+      if (currentTime - lastAttemptTime > lockoutDuration) {
+        attemptCount = 0;
+      }
       
       const password = document.getElementById('password').value;
       
@@ -232,67 +274,112 @@
         const data = await response.json();
         
         if (response.ok && data.success) {
-          const content = document.getElementById('secretContent');
-          // Check if the string starts with base64 image header
-          if (data.string.startsWith('iVBOR') || // PNG
-              data.string.startsWith('/9j/') ||  // JPG
-              data.string.startsWith('R0lGOD') || // GIF
-              data.string.startsWith('PHN2Zz')) { // SVG
-            // Split the content if it contains both image and text
-            const parts = data.string.split('|');
-            content.innerHTML = ''; // Clear any existing content
-            
-            // Handle image part
-            const img = document.createElement('img');
-            // Detect the correct MIME type
-            let mimeType = 'image/png'; // default
-            if (parts[0].startsWith('iVBOR')) {
-              mimeType = 'image/png';
-            } else if (parts[0].startsWith('/9j/')) {
-              mimeType = 'image/jpeg';
-            } else if (parts[0].startsWith('R0lGOD')) {
-              mimeType = 'image/gif';
-            } else if (parts[0].startsWith('PHN2Zz')) {
-              mimeType = 'image/svg+xml';
-            }
-            
-            img.src = `data:${mimeType};base64,${parts[0]}`;
-            img.style.maxWidth = '100%';
-            img.style.height = 'auto';
-            img.style.display = 'block';
-            img.style.margin = '0 auto 1rem';  // Added bottom margin
-            content.appendChild(img);
-            
-            // If there's additional text content
-            if (parts.length > 1) {
-              const textDiv = document.createElement('div');
-              textDiv.style.marginTop = '1rem';
-              textDiv.style.borderTop = '1px solid #dee2e6';
-              textDiv.style.paddingTop = '1rem';
-              textDiv.textContent = parts[1];
-              content.appendChild(textDiv);
-              document.getElementById('copyContentBtn').style.display = 'block';
-            } else {
-              document.getElementById('copyContentBtn').style.display = 'none';
-            }
+          // Reset attempt count on successful login
+          attemptCount = 0;
+          lastAttemptTime = 0;
+          lockoutEndTime = 0;
+          
+          // Show one-time warning if applicable
+          if (data.isOneTime) {
+            document.getElementById('oneTimeWarning').classList.remove('hidden');
           } else {
-            // Handle text content
-            content.textContent = data.string;
-            document.getElementById('copyContentBtn').style.display = 'block';
+            document.getElementById('oneTimeWarning').classList.add('hidden');
           }
-          document.getElementById('passwordSection').classList.add('hidden');
-          document.getElementById('resultSection').classList.remove('hidden');
-          document.getElementById('errorSection').classList.add('hidden');
+          
+          const content = document.getElementById('secretContent');
+          try {
+            // Check if the string starts with base64 image header
+            if (data.string.startsWith('iVBOR') || // PNG
+                data.string.startsWith('/9j/') ||  // JPG
+                data.string.startsWith('R0lGOD') || // GIF
+                data.string.startsWith('PHN2Zz')) { // SVG
+              // Split the content if it contains both image and text
+              const parts = data.string.split('|');
+              content.innerHTML = ''; // Clear any existing content
+              
+              // Handle image part
+              const img = document.createElement('img');
+              // Detect the correct MIME type
+              let mimeType = 'image/png'; // default
+              if (parts[0].startsWith('iVBOR')) {
+                mimeType = 'image/png';
+              } else if (parts[0].startsWith('/9j/')) {
+                mimeType = 'image/jpeg';
+              } else if (parts[0].startsWith('R0lGOD')) {
+                mimeType = 'image/gif';
+              } else if (parts[0].startsWith('PHN2Zz')) {
+                mimeType = 'image/svg+xml';
+              }
+              
+              img.src = `data:${mimeType};base64,${parts[0]}`;
+              img.style.maxWidth = '100%';
+              img.style.height = 'auto';
+              img.style.display = 'block';
+              img.style.margin = '0 auto 1rem';
+              content.appendChild(img);
+              
+              // If there's additional text content
+              if (parts.length > 1) {
+                const textDiv = document.createElement('div');
+                textDiv.style.marginTop = '1rem';
+                textDiv.style.borderTop = '1px solid #dee2e6';
+                textDiv.style.paddingTop = '1rem';
+                textDiv.textContent = parts[1];
+                content.appendChild(textDiv);
+                document.getElementById('copyContentBtn').style.display = 'block';
+              } else {
+                document.getElementById('copyContentBtn').style.display = 'none';
+              }
+            } else {
+              // Handle text content
+              content.textContent = data.string;
+              document.getElementById('copyContentBtn').style.display = 'block';
+            }
+            document.getElementById('passwordSection').classList.add('hidden');
+            document.getElementById('resultSection').classList.remove('hidden');
+            document.getElementById('errorSection').classList.add('hidden');
+          } catch (decryptError) {
+            handleError('Unable to decrypt the content. Please check your password and try again.');
+          }
         } else {
-          document.getElementById('errorMessage').textContent = data.error || 'Unknown error occurred';
-          document.getElementById('errorSection').classList.remove('hidden');
+          handleError(getErrorMessage(data.error));
         }
       } catch (error) {
-        document.getElementById('errorMessage').textContent = 'An error occurred. Please try again.';
-        document.getElementById('errorSection').classList.remove('hidden');
+        handleError('An error occurred. Please try again.');
         console.error(error);
+      } finally {
+        // Hide loading spinner
+        buttonText.classList.remove('d-none');
+        spinner.classList.add('d-none');
       }
     });
+
+    // Helper function to handle errors
+    function handleError(message) {
+      document.getElementById('errorMessage').textContent = message;
+      document.getElementById('errorSection').classList.remove('hidden');
+      
+      attemptCount++;
+      lastAttemptTime = Date.now();
+      
+      if (attemptCount >= maxAttempts) {
+        lockoutEndTime = Date.now() + lockoutDuration;
+        document.getElementById('errorMessage').textContent = 'Too many failed attempts. Please try again in 5 minutes.';
+      } else {
+        const remainingAttempts = maxAttempts - attemptCount;
+        document.getElementById('errorMessage').textContent = `${message} ${remainingAttempts} attempts remaining.`;
+      }
+    }
+
+    // Helper function to get error message
+    function getErrorMessage(error) {
+      if (error && error.includes('authenticate')) {
+        return 'Unable to authenticate. Please check your password.';
+      } else if (error && error.includes('decrypt')) {
+        return 'Decryption failed. Please ensure you have the correct password.';
+      }
+      return 'Invalid password.';
+    }
     
     document.getElementById('tryAgainBtn').addEventListener('click', () => {
       document.getElementById('errorSection').classList.add('hidden');
@@ -301,9 +388,18 @@
     });
     
     document.getElementById('closeBtn').addEventListener('click', () => {
-      document.getElementById('passwordSection').classList.remove('hidden');
-      document.getElementById('resultSection').classList.add('hidden');
-      document.getElementById('password').value = '';
+      if (data.isOneTime) {
+        // For one-time content, show message that it's been destroyed
+        document.getElementById('passwordSection').classList.add('hidden');
+        document.getElementById('resultSection').classList.add('hidden');
+        document.getElementById('errorSection').classList.remove('hidden');
+        document.getElementById('errorMessage').textContent = 'This content has been permanently deleted.';
+        document.getElementById('tryAgainBtn').classList.add('hidden');
+      } else {
+        document.getElementById('passwordSection').classList.remove('hidden');
+        document.getElementById('resultSection').classList.add('hidden');
+        document.getElementById('password').value = '';
+      }
     });
     
     document.getElementById('copyContentBtn').addEventListener('click', () => {
@@ -318,10 +414,13 @@
         }, 2000);
       });
     });
-  </script>
-  
-  <!-- Dark mode script -->
-  <script>
+
+    // Add password visibility toggle
+    document.getElementById('showPassword').addEventListener('change', (e) => {
+      const passwordInput = document.getElementById('password');
+      passwordInput.type = e.target.checked ? 'text' : 'password';
+    });
+
     // Check for saved theme preference or use the system preference
     function getInitialTheme() {
       const savedTheme = localStorage.getItem('theme');
@@ -353,5 +452,66 @@
     document.getElementById('darkModeToggle').addEventListener('click', () => applyTheme('dark'));
     document.getElementById('lightModeToggle').addEventListener('click', () => applyTheme('light'));
   </script>
+  
+  <!-- Dark mode script -->
+  <script>
+    // Check for saved theme preference or use the system preference
+    function getInitialTheme() {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme) {
+        return savedTheme;
+      }
+      return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    
+    // Apply theme to page
+    // Debounce theme change to prevent multiple rapid changes
+    function debounce(func, wait) {
+      let timeout;
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout);
+          func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+      };
+    }
+    
+    const applyTheme = debounce((theme) => {
+      document.documentElement.setAttribute('data-bs-theme', theme);
+      localStorage.setItem('theme', theme);
+      
+      const darkToggle = document.getElementById('darkModeToggle');
+      const lightToggle = document.getElementById('lightModeToggle');
+      
+      if (theme === 'dark') {
+        darkToggle.classList.add('hidden');
+        lightToggle.classList.remove('hidden');
+      } else {
+        darkToggle.classList.remove('hidden');
+        lightToggle.classList.add('hidden');
+      }
+    }, 250);
+    
+    // Initialize theme
+    applyTheme(getInitialTheme());
+    
+    // Add event listeners for toggle buttons
+    document.getElementById('darkModeToggle').addEventListener('click', () => applyTheme('dark'));
+    document.getElementById('lightModeToggle').addEventListener('click', () => applyTheme('light'));
+  </script>
 </body>
 </html>
+
+.alert-warning {
+    background-color: #fff3cd;
+    border-color: #ffeeba;
+    color: #856404;
+}
+
+[data-bs-theme="dark"] .alert-warning {
+    background-color: #533f03;
+    border-color: #856404;
+    color: #fff3cd;
+}

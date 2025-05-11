@@ -47,6 +47,18 @@ button {
 }
 
 /* Add transition for smooth theme switching */
+:root {
+  /* Use CSS custom properties for better performance */
+  --transition-speed: 0.3s;
+  --border-radius: 8px;
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+}
+
+/* Optimize transitions */
 * {
-    transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color var(--transition-speed) ease,
+              color var(--transition-speed) ease,
+              border-color var(--transition-speed) ease;
 }
