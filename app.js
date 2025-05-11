@@ -19,12 +19,24 @@ app.use(express.static(path.join(__dirname, 'public')));
 const secretStrings = {};
 
 // Rate limiting configuration
+// Optimize rate limiter with a more efficient data structure
 const rateLimiter = {
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  maxAttempts: 5, // Maximum failed attempts per IP within the window
-  blockedIPs: {}, // Store for blocked IPs
-  attempts: {} // Store for tracking attempts
+  windowMs: 15 * 60 * 1000,
+  maxAttempts: 5,
+  blockedIPs: new Map(), // Use Map instead of object for better performance
+  attempts: new Map()
 };
+
+// Add cleanup for rate limiter data
+setInterval(() => {
+  const now = Date.now();
+  rateLimiter.blockedIPs.forEach((value, key) => {
+    if (value <= now) {
+      rateLimiter.blockedIPs.delete(key);
+      rateLimiter.attempts.delete(key);
+    }
+  });
+}, 60 * 60 * 1000);
 
 // Generate a unique ID for each shared string
 function generateId() {
@@ -346,3 +358,15 @@ function generateCustomQR(url, options = {}) {
     });
   });
 }
+
+// Add centralized error handling
+function handleError(error, res) {
+  console.error('Error:', error);
+  const statusCode = error.statusCode || 500;
+  const message = error.message || 'An unexpected error occurred';
+  res.status(statusCode).json({ error: message });
+}
+
+app.use((error, req, res, next) => {
+  handleError(error, res);
+});
