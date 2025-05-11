@@ -238,22 +238,47 @@
               data.string.startsWith('/9j/') ||  // JPG
               data.string.startsWith('R0lGOD') || // GIF
               data.string.startsWith('PHN2Zz')) { // SVG
-          // Handle image content
-          content.innerHTML = ''; // Clear any existing content
-          const img = document.createElement('img');
-          img.src = `data:image/png;base64,${data.string}`;
-          img.style.maxWidth = '100%';
-          img.style.height = 'auto';
-          img.style.display = 'block';
-          img.style.margin = '0 auto';
-          content.appendChild(img);
-          
-          // Hide copy button for images
-          document.getElementById('copyContentBtn').style.display = 'none';
+            // Split the content if it contains both image and text
+            const parts = data.string.split('|');
+            content.innerHTML = ''; // Clear any existing content
+            
+            // Handle image part
+            const img = document.createElement('img');
+            // Detect the correct MIME type
+            let mimeType = 'image/png'; // default
+            if (parts[0].startsWith('iVBOR')) {
+              mimeType = 'image/png';
+            } else if (parts[0].startsWith('/9j/')) {
+              mimeType = 'image/jpeg';
+            } else if (parts[0].startsWith('R0lGOD')) {
+              mimeType = 'image/gif';
+            } else if (parts[0].startsWith('PHN2Zz')) {
+              mimeType = 'image/svg+xml';
+            }
+            
+            img.src = `data:${mimeType};base64,${parts[0]}`;
+            img.style.maxWidth = '100%';
+            img.style.height = 'auto';
+            img.style.display = 'block';
+            img.style.margin = '0 auto 1rem';  // Added bottom margin
+            content.appendChild(img);
+            
+            // If there's additional text content
+            if (parts.length > 1) {
+              const textDiv = document.createElement('div');
+              textDiv.style.marginTop = '1rem';
+              textDiv.style.borderTop = '1px solid #dee2e6';
+              textDiv.style.paddingTop = '1rem';
+              textDiv.textContent = parts[1];
+              content.appendChild(textDiv);
+              document.getElementById('copyContentBtn').style.display = 'block';
+            } else {
+              document.getElementById('copyContentBtn').style.display = 'none';
+            }
           } else {
-          // Handle text content
-          content.textContent = data.string;
-          document.getElementById('copyContentBtn').style.display = 'block';
+            // Handle text content
+            content.textContent = data.string;
+            document.getElementById('copyContentBtn').style.display = 'block';
           }
           document.getElementById('passwordSection').classList.add('hidden');
           document.getElementById('resultSection').classList.remove('hidden');
