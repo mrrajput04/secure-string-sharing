@@ -38,10 +38,10 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "cdnjs.cloudflare.com", "stackpath.bootstrapcdn.com"],
       imgSrc: ["'self'", 'data:', 'blob:'],
       connectSrc: ["'self'"],
-      fontSrc: ["'self'"],
+      fontSrc: ["'self'", "cdnjs.cloudflare.com"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"]
     }
@@ -78,6 +78,7 @@ function decryptString(encryptedData, password) {
     decrypted += decipher.final('utf8');
     return decrypted;
   } catch (error) {
+    console.error('Decryption error:', error);
     return null; // Decryption failed (wrong password)
   }
 }
@@ -122,56 +123,66 @@ function rateLimit(req, res, next) {
 
 // Routes
 // API to create a new secured string
-app.post('/api/strings', (req, res) => {
-  const { string, password, expiration } = req.body;
+app.post('/api/strings', async (req, res) => {
+  const { string, password, expiration, format } = req.body;
 
   if (!string || !password) {
     return res.status(400).json({ error: 'String and password are required' });
   }
 
-
   const id = generateId();
-  const encryptedData = encryptString(string, password);
 
+  // Handle markdown formatting if specified
+  let processedString = string;
+  if (format === 'markdown') {
+    const showdown = require('showdown');
+    const converter = new showdown.Converter();
+    processedString = converter.makeHtml(string);
+  }
+
+  const encryptedData = encryptString(processedString, password);
 
   let expiresAt = null;
   if (expiration && !isNaN(expiration)) {
-    // Convert hours to milliseconds
     expiresAt = Date.now() + (parseInt(expiration) * 60 * 60 * 1000);
   }
 
-
   secretStrings[id] = {
     ...encryptedData,
+    format: format || 'text',
     expiresAt,
     createdAt: Date.now()
   };
 
-
   const shareUrl = `${req.protocol}://${req.get('host')}/view/${id}`;
 
+  try {
+    const qrCode = await generateCustomQR(shareUrl);
 
-  // Generate QR Code
-  QRCode.toDataURL(shareUrl, {
-    errorCorrectionLevel: 'H',
-    margin: 1,
-    width: 300
-  }, (err, qrDataUrl) => {
-    if (err) {
-      console.error('QR Code generation error:', err);
-      // Still return success with URL even if QR fails
-      return res.json({
-        success: true,
-      })
-    } else {
-      return res.json({
-        success: true,
-        id,
-        expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
-        shareUrl
-      });
-    }
-  });
+    // Generate social share links
+    const socialLinks = {
+      twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}`,
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
+      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`
+    };
+
+    res.json({
+      success: true,
+      id,
+      expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
+      shareUrl,
+      qrCode,
+      socialLinks
+    });
+  } catch (error) {
+    console.error('QR Code generation error:', error);
+    res.json({
+      success: true,
+      id,
+      expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
+      shareUrl
+    });
+  }
 });
 
 
@@ -185,59 +196,39 @@ app.post('/api/strings/:id', rateLimit, (req, res) => {
     return res.status(400).json({ error: 'Password is required' });
   }
 
-
   const encryptedData = secretStrings[id];
-
-
+  
   if (!encryptedData) {
-    return res.status(404).json({ error: 'String not found or has expired' });
+    return res.status(404).json({ error: 'String not found or expired' });
   }
-
-  // Check if string has expired
-  if (encryptedData.expiresAt && encryptedData.expiresAt < Date.now()) {
-    delete secretStrings[id];
-    return res.status(404).json({ error: 'String has expired' });
-  }
-
 
   const decrypted = decryptString(encryptedData, password);
-
-
-  if (decrypted === null) {
-    // Track failed attempts for rate limiting
+  
+  if (!decrypted) {
+    // Handle rate limiting for failed attempts
     if (!rateLimiter.attempts[ip]) {
       rateLimiter.attempts[ip] = { count: 1, firstAttempt: Date.now() };
     } else {
       rateLimiter.attempts[ip].count++;
-
-
-      // Reset counter if outside the window
-      if (Date.now() - rateLimiter.attempts[ip].firstAttempt > rateLimiter.windowMs) {
-        rateLimiter.attempts[ip] = { count: 1, firstAttempt: Date.now() };
-      }
-
-
-      // Block IP if too many attempts
-      if (rateLimiter.attempts[ip].count > rateLimiter.maxAttempts) {
-        // Block for 30 minutes
-        rateLimiter.blockedIPs[ip] = Date.now() + (30 * 60 * 1000);
-        return res.status(429).json({
-          error: 'Too many failed attempts. Please try again in 30 minutes.'
-        });
-      }
     }
 
+    if (rateLimiter.attempts[ip].count >= rateLimiter.maxAttempts) {
+      rateLimiter.blockedIPs[ip] = Date.now() + (15 * 60 * 1000); // Block for 15 minutes
+      delete rateLimiter.attempts[ip];
+      return res.status(429).json({ error: 'Too many failed attempts. Please try again in 15 minutes.' });
+    }
 
     return res.status(401).json({ error: 'Incorrect password' });
   }
 
-  // Reset attempt counter on successful access
-  if (rateLimiter.attempts[ip]) {
-    delete rateLimiter.attempts[ip];
-  }
+  // Reset attempts on successful decryption
+  delete rateLimiter.attempts[ip];
 
-
-  res.json({ success: true, string: decrypted });
+  res.json({
+    success: true,
+    string: decrypted,
+    contentType: encryptedData.contentType || 'text' // Include content type
+  });
 });
 
 // HTML Routes
@@ -355,74 +346,3 @@ function generateCustomQR(url, options = {}) {
     });
   });
 }
-
-// Update the /api/strings endpoint to support markdown
-app.post('/api/strings', async (req, res) => {
-  const { string, password, expiration, qrStyle, format } = req.body;
-
-  if (!string || !password) {
-    return res.status(400).json({ error: 'String and password are required' });
-  }
-
-  const id = generateId();
-
-  // Handle markdown formatting if specified
-  let processedString = string;
-  if (format === 'markdown') {
-    const showdown = require('showdown');
-    const converter = new showdown.Converter();
-    processedString = converter.makeHtml(string);
-  }
-
-  const encryptedData = encryptString(processedString, password);
-
-  let expiresAt = null;
-  if (expiration && !isNaN(expiration)) {
-    expiresAt = Date.now() + (parseInt(expiration) * 60 * 60 * 1000);
-  }
-
-  secretStrings[id] = {
-    ...encryptedData,
-    format: format || 'text',
-    expiresAt,
-    createdAt: Date.now()
-  };
-
-  const shareUrl = `${req.protocol}://${req.get('host')}/view/${id}`;
-
-  try {
-    const qrCode = await generateCustomQR(shareUrl, qrStyle);
-
-    // Generate social share links
-    const socialLinks = {
-      twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}`,
-      facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
-      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`
-    };
-    try {
-      const qrCode = await generateCustomQR(shareUrl, qrStyle);
-
-      // Generate social share links
-      const socialLinks = {
-        twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}`,
-        facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
-        linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`
-      };
-
-      res.json({
-        success: true,
-        id,
-        expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
-        shareUrl,
-        qrCode,
-        socialLinks
-      });
-    } catch (error) {
-      console.error('QR Code generation error:', error);
-      res.status(500).json({ error: 'Failed to generate QR code' });
-    }
-  } catch (error) {
-    console.error('QR Code generation error:', error);
-    res.status(500).json({ error: 'Failed to generate QR code' });
-  }
-});
