@@ -4,8 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Secure String Sharing</title>
+    
     <!-- Favicon -->
     <link rel="icon" href="favicon/favicon.svg" type="image/x-icon">
+    <link rel="apple-touch-icon" href="favicon/apple-touch-icon.png">
+
     <!-- Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -74,6 +77,7 @@
         document.getElementById('secure-string-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             const fileInput = document.getElementById('file-input');
+            const secretInput = document.getElementById('secret-input');
             const password = document.getElementById('password-input').value.trim();
             const expiration = document.getElementById('expiration-select').value;
             
@@ -81,69 +85,63 @@
                 alert('Please enter all required fields.');
                 return;
             }
-        
-            const formData = new FormData();
-            if (fileInput.files.length > 0) {
-                formData.append('file', fileInput.files[0]);
-            }
-            formData.append('password', password);
-            formData.append('expiration', expiration);
-        
+
             try {
-                const res = await fetch('/api/files', {
-                    method: 'POST',
-                    body: formData
-                });
-                const data = await res.json();
+                let response;
+                if (fileInput.files.length > 0) {
+                    // Handle file upload
+                    const formData = new FormData();
+                    formData.append('file', fileInput.files[0]);
+                    formData.append('password', password);
+                    formData.append('expiration', expiration);
+                
+                    response = await fetch('/api/files', {
+                        method: 'POST',
+                        body: formData
+                    });
+                } else if (secretInput.value.trim()) {
+                    // Handle text input
+                    response = await fetch('/api/strings', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            string: secretInput.value.trim(),
+                            password,
+                            expiration
+                        })
+                    });
+                } else {
+                    alert('Please enter either text or select a file.');
+                    return;
+                }
+
+                const data = await response.json();
+                
                 if (data.success && data.shareUrl) {
                     document.getElementById('generated-link').innerHTML = 
-                        `<strong>Share this link:</strong> <a href="${data.shareUrl}" target="_blank">${data.shareUrl}</a>`;
+                        `<strong>Share this link:</strong> 
+                         <div class="input-group mb-3">
+                            <input type="text" class="form-control" value="${data.shareUrl}" readonly>
+                            <div class="input-group-append">
+                                <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('${data.shareUrl}')">
+                                    <i class="fas fa-copy"></i> Copy
+                                </button>
+                            </div>
+                         </div>`;
+                    
+                    // Display QR code if available
+                    if (data.qrCode) {
+                        document.getElementById('qr-code-display').innerHTML = 
+                            `<img src="${data.qrCode}" alt="QR Code" />`;
+                    }
                 } else {
                     document.getElementById('generated-link').innerHTML = 
                         `<span style="color:red;">Failed to generate link: ${data.error || 'Unknown error'}</span>`;
-                    if (data.details) {
-                        console.error('Error details:', data.details);
-                    }
                 }
             } catch (error) {
                 console.error('Network error:', error);
                 document.getElementById('generated-link').innerHTML = 
                     `<span style="color:red;">Network error occurred while processing your request</span>`;
-            const secret = document.getElementById('secret-input').value.trim();
-            const password = document.getElementById('password-input').value.trim();
-            const expiration = document.getElementById('expiration-select').value;
-            if (!secret || !password || !expiration) {
-                alert('Please enter all required fields.');
-                return;
-            }
-            const res = await fetch('/api/strings', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ string: secret, password, expiration })
-            });
-            const data = await res.json();
-            if (data.success && data.shareUrl) {
-                console.log('Generated URL:', data.shareUrl); // Log the URL
-                document.getElementById('generated-link').innerHTML = 
-                    `<strong>Share this link:</strong> <a href="${data.shareUrl}" target="_blank">${data.shareUrl}</a>`;
-                
-                // Generate QR code
-                const qrRes = await fetch('/api/generate-qr', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url: data.shareUrl })
-                });
-                const qrData = await qrRes.json();
-                if (qrData.success) {
-                    document.getElementById('qr-code-display').innerHTML = 
-                        `<img src="${qrData.qrCodeDataUrl}" alt="QR Code" />`;
-                } else {
-                    document.getElementById('qr-code-display').innerHTML = 
-                        `<span style="color:red;">Failed to generate QR code</span>`;
-                }
-            } else {
-                document.getElementById('generated-link').innerHTML = 
-                    `<span style="color:red;">Failed to generate link: ${data.error || 'Unknown error'}</span>`;
             }
         });
 
@@ -157,7 +155,23 @@
         document.addEventListener('DOMContentLoaded', () => {
             const savedTheme = localStorage.getItem('preferred-theme') || 'light';
             changeTheme(savedTheme);
+            document.getElementById('theme-select').value = savedTheme;
         });
+
+        // Add copy to clipboard function
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                const copyBtn = document.querySelector('.input-group-append button');
+                const originalHTML = copyBtn.innerHTML;
+                copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalHTML;
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+                alert('Failed to copy to clipboard');
+            });
+        }
     </script>
 </body>
 </html>

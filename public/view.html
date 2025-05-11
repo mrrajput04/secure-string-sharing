@@ -1,40 +1,170 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="light">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>View Secure String</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    body {
-      padding-top: 50px;
-      transition: background-color 0.3s ease;
-    }
-    .container {
-      max-width: 800px;
-    }
-    .hidden {
-      display: none;
-    }
-    .theme-toggle {
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      z-index: 1000;
-    }
-    .dark-mode-icon, .light-mode-icon {
-      cursor: pointer;
-      font-size: 1.5rem;
-      padding: 5px;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background-color: rgba(0,0,0,0.1);
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access Secure String</title>
+
+   <!-- Favicon -->
+    <link rel="icon" href="favicon/favicon.svg" type="image/x-icon">
+    <link rel="icon" href="favicon/favicon-32x32.png" sizes="32x32" type="image/png">
+    <link rel="icon" href="favicon/favicon-16x16.png" sizes="16x16" type="image/png">
+    <link rel="manifest" href="favicon/site.webmanifest">
+    <link rel="apple-touch-icon" href="favicon/apple-touch-icon.png">
+    <link rel="android-chrome-icon" href="favicon/android-chrome-192x192.png">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --bg-color: #f8f9fa;
+            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            background-color: var(--bg-color);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px 0;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            padding: 0 15px;
+            margin: 0 auto;
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-color), #0056b3);
+            padding: 1.5rem;
+            border-bottom: none;
+        }
+
+        .card-header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .card-body {
+            padding: 2rem;
+        }
+
+        .form-control {
+            border-radius: 8px;
+            padding: 12px;
+            border: 1px solid #dee2e6;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+            border-color: var(--primary-color);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: #0056b3;
+            transform: translateY(-1px);
+        }
+
+        .alert {
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+
+        .pre-wrap {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            margin: 1rem 0;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Dark mode styles */
+        [data-bs-theme="dark"] {
+            --bg-color: #212529;
+            --text-color: #f8f9fa;
+        }
+
+        [data-bs-theme="dark"] body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        [data-bs-theme="dark"] .card {
+            background-color: #2c3034;
+        }
+
+        [data-bs-theme="dark"] .form-control {
+            background-color: #343a40;
+            border-color: #495057;
+            color: var(--text-color);
+        }
+
+        [data-bs-theme="dark"] .alert-success {
+            background-color: #1e4c2b;
+            border-color: #28a745;
+            color: var(--text-color);
+        }
+
+        /* Theme toggle button */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+    </style>
 </head>
 <body>
   <div class="theme-toggle">
@@ -102,7 +232,29 @@
         const data = await response.json();
         
         if (response.ok && data.success) {
-          document.getElementById('secretContent').textContent = data.string;
+          const content = document.getElementById('secretContent');
+          // Check if the string starts with base64 image header
+          if (data.string.startsWith('iVBOR') || // PNG
+              data.string.startsWith('/9j/') ||  // JPG
+              data.string.startsWith('R0lGOD') || // GIF
+              data.string.startsWith('PHN2Zz')) { // SVG
+          // Handle image content
+          content.innerHTML = ''; // Clear any existing content
+          const img = document.createElement('img');
+          img.src = `data:image/png;base64,${data.string}`;
+          img.style.maxWidth = '100%';
+          img.style.height = 'auto';
+          img.style.display = 'block';
+          img.style.margin = '0 auto';
+          content.appendChild(img);
+          
+          // Hide copy button for images
+          document.getElementById('copyContentBtn').style.display = 'none';
+          } else {
+          // Handle text content
+          content.textContent = data.string;
+          document.getElementById('copyContentBtn').style.display = 'block';
+          }
           document.getElementById('passwordSection').classList.add('hidden');
           document.getElementById('resultSection').classList.remove('hidden');
           document.getElementById('errorSection').classList.add('hidden');
