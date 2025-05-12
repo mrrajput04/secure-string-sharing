@@ -136,22 +136,13 @@ function rateLimit(req, res, next) {
 // Routes
 // API to create a new secured string
 app.post('/api/strings', async (req, res) => {
-  const { string, password, expiration, format } = req.body;
+  const { string, password, expiration, format, passwordHint } = req.body;
 
   if (!string || !password) {
     return res.status(400).json({ error: 'String and password are required' });
   }
 
   const id = generateId();
-
-  // Handle markdown formatting if specified
-  let processedString = string;
-  if (format === 'markdown') {
-    const showdown = require('showdown');
-    const converter = new showdown.Converter();
-    processedString = converter.makeHtml(string);
-  }
-
   const encryptedData = encryptString(processedString, password);
 
   let expiresAt = null;
@@ -163,7 +154,8 @@ app.post('/api/strings', async (req, res) => {
     ...encryptedData,
     format: format || 'text',
     expiresAt,
-    createdAt: Date.now()
+    createdAt: Date.now(),
+    passwordHint: passwordHint || null // Store the password hint
   };
 
   const shareUrl = `${req.protocol}://${req.get('host')}/view/${id}`;
@@ -369,4 +361,19 @@ function handleError(error, res) {
 
 app.use((error, req, res, next) => {
   handleError(error, res);
+});
+
+// Add a new endpoint to get password hint
+app.get('/api/strings/:id/hint', (req, res) => {
+  const { id } = req.params;
+  const data = secretStrings[id];
+  
+  if (!data) {
+    return res.status(404).json({ error: 'String not found or expired' });
+  }
+
+  res.json({
+    success: true,
+    hint: data.passwordHint || 'No hint provided'
+  });
 });
