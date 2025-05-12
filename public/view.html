@@ -180,6 +180,9 @@
       <div class="card-body">
         <div id="passwordSection">
           <p>This link contains a secure string that requires a password to view.</p>
+          <div id="passwordHint" class="alert alert-info mb-3 hidden">
+            <i class="fas fa-info-circle"></i> Password Hint: <span id="hintText"></span>
+          </div>
           <div id="oneTimeWarning" class="alert alert-warning mb-3">
             <i class="fas fa-exclamation-triangle"></i> Warning: This is a one-time viewing link. Once accessed, the content will be permanently deleted.
           </div>
@@ -223,6 +226,24 @@
 
   <script>
     const stringId = window.location.pathname.split('/').pop();
+    
+    // Add function to fetch and display password hint
+    async function fetchPasswordHint() {
+      try {
+        const response = await fetch(`/api/strings/${stringId}/hint`);
+        const data = await response.json();
+        
+        if (response.ok && data.success && data.hint) {
+          document.getElementById('hintText').textContent = data.hint;
+          document.getElementById('passwordHint').classList.remove('hidden');
+        }
+      } catch (error) {
+        console.error('Error fetching password hint:', error);
+      }
+    }
+    
+    // Fetch hint when page loads
+    fetchPasswordHint();
     
     // Add rate limiting variables
     const maxAttempts = 5;
