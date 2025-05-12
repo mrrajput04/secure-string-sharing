@@ -20,60 +20,21 @@
 
 <style>
 :root {
+  /* Consolidated CSS variables */
   --primary-color: #007bff;
+  --primary-dark: #0056b3;
   --secondary-color: #6c757d;
   --success-color: #28a745;
   --bg-color: #f8f9fa;
+  --text-color: #212529;
+  --border-color: #dee2e6;
   --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   --base-font-size: 16px;
+  --border-radius: 8px;
+  --transition-speed: 0.3s;
 }
 
-.alert-warning {
-  background-color: #fff3cd;
-  border-color: #ffeeba;
-  color: #856404;
-}
-
-[data-bs-theme="dark"] .alert-warning {
-  background-color: #533f03;
-  border-color: #856404;
-  color: #fff3cd;
-}
-
-@media (max-width: 576px) {
-  :root {
-    --base-font-size: 14px;
-  }
-  .card-header h1 {
-    font-size: 1.25rem;
-  }
-  .alert {
-    font-size: 0.9rem;
-  }
-  #secretContent img {
-    margin: 0 auto 0.5rem;
-  }
-  .container {
-    padding: 10px;
-  }
-  .card-body {
-    padding: 1rem;
-  }
-  .btn {
-    padding: 8px 16px;
-  }
-}
-
-@media (max-width: 400px) {
-  .d-flex {
-    flex-direction: column;
-    gap: 1rem;
-  }
-  .btn {
-    width: 100%;
-  }
-}
-
+/* Base styles */
 body {
   background-color: var(--bg-color);
   min-height: 100vh;
@@ -84,6 +45,7 @@ body {
   margin: 0;
 }
 
+/* Component styles */
 .container {
   max-width: 800px;
   width: 100%;
@@ -93,120 +55,52 @@ body {
 
 .card {
   border: none;
-  border-radius: 15px;
+  border-radius: var(--border-radius);
   box-shadow: var(--card-shadow);
   overflow: hidden;
   margin: 0 auto;
   width: 100%;
 }
 
-.card-header {
-  background: linear-gradient(135deg, var(--primary-color), #0056b3);
-  padding: 1.5rem;
-  border-bottom: none;
-}
-
-.card-header h1 {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 600;
-}
-
-.card-body {
-  padding: 2rem;
-}
-
+/* Form elements */
 .form-control {
-  border-radius: 8px;
+  border-radius: var(--border-radius);
   padding: 12px;
-  border: 1px solid #dee2e6;
-  transition: all 0.3s ease;
-}
-.form-control:focus {
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-  border-color: var(--primary-color);
+  border: 1px solid var(--border-color);
+  transition: all var(--transition-speed) ease;
 }
 
 .btn {
   padding: 12px 24px;
-  border-radius: 8px;
+  border-radius: var(--border-radius);
   font-weight: 500;
-  transition: all 0.3s ease;
-}
-.btn-primary {
-  background: var(--primary-color);
-  border: none;
-}
-.btn-primary:hover {
-  background: #0056b3;
-  transform: translateY(-1px);
+  transition: all var(--transition-speed) ease;
 }
 
-.alert {
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
-}
-.alert-success {
-  background-color: #d4edda;
-  border-color: #c3e6cb;
-}
-.pre-wrap {
-  background: #f8f9fa;
-  padding: 1rem;
-  border-radius: 8px;
-  border: 1px solid #dee2e6;
-  margin: 1rem 0;
-}
-.hidden {
-  display: none;
-}
-
-/* Dark mode styles */
+/* Dark mode */
 [data-bs-theme="dark"] {
   --bg-color: #212529;
   --text-color: #f8f9fa;
-}
-[data-bs-theme="dark"] body {
-  background-color: var(--bg-color);
-  color: var(--text-color);
-}
-[data-bs-theme="dark"] .card {
-  background-color: #2c3034;
-}
-[data-bs-theme="dark"] .form-control {
-  background-color: #343a40;
-  border-color: #495057;
-  color: var(--text-color);
-}
-[data-bs-theme="dark"] .alert-success {
-  background-color: #1e4c2b;
-  border-color: #28a745;
-  color: var(--text-color);
+  --border-color: #495057;
 }
 
-/* Theme toggle button */
-.theme-toggle {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 1000;
-  cursor: pointer;
-  background: rgba(255, 255, 255, 0.1);
-  padding: 10px;
-  border-radius: 50%;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-  transition: all 0.3s ease;
-}
+/* Responsive styles */
 @media (max-width: 576px) {
-  .theme-toggle {
-    top: 10px;
-    right: 10px;
-    padding: 8px;
+  :root {
+    --base-font-size: 14px;
   }
+  
+  .container { padding: 10px; }
+  .card-body { padding: 1rem; }
+  .btn { padding: 8px 16px; }
 }
-.theme-toggle:hover {
-  transform: scale(1.1);
-  background-color: rgba(0, 0, 0, 0.1);
+
+@media (max-width: 400px) {
+  .d-flex {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .btn { width: 100%; }
 }
 </style>
 </head>
@@ -274,245 +168,96 @@ body {
 </div>
 
 <script>
-// Extract string ID from URL
-const stringId = window.location.pathname.split('/').pop();
-
-// Fetch password hint on load
-async function fetchPasswordHint() {
-  try {
-    const response = await fetch(`/api/strings/${stringId}/hint`);
-    const data = await response.json();
-    if (response.ok && data.success && data.hint) {
-      document.getElementById('hintText').textContent = data.hint;
-      document.getElementById('passwordHint').classList.remove('hidden');
-    }
-  } catch (error) {
-    console.error('Error fetching password hint:', error);
+// Constants
+const CONSTANTS = {
+  MAX_ATTEMPTS: 5,
+  LOCKOUT_DURATION: 300000, // 5 mins
+  COPY_FEEDBACK_DURATION: 2000,
+  IMAGE_MIME_TYPES: {
+    'iVBOR': 'image/png',
+    '/9j/': 'image/jpeg',
+    'R0lGOD': 'image/gif',
+    'PHN2Zz': 'image/svg+xml'
   }
-}
-fetchPasswordHint();
+};
 
-// Rate limiting variables
-const maxAttempts = 5;
-const lockoutDuration = 300000; // 5 mins
-let attemptCount = 0;
-let lastAttemptTime = 0;
-let lockoutEndTime = 0;
+// State management
+const state = {
+  attemptCount: 0,
+  lastAttemptTime: 0,
+  lockoutEndTime: 0,
+  currentData: null
+};
 
-// Store response data
-let currentData = null;
+// DOM Elements
+const elements = {
+  password: document.getElementById('password'),
+  errorMessage: document.getElementById('errorMessage'),
+  errorSection: document.getElementById('errorSection'),
+  passwordSection: document.getElementById('passwordSection'),
+  resultSection: document.getElementById('resultSection'),
+  secretContent: document.getElementById('secretContent'),
+  copyContentBtn: document.getElementById('copyContentBtn'),
+  oneTimeWarning: document.getElementById('oneTimeWarning'),
+  tryAgainBtn: document.getElementById('tryAgainBtn')
+};
 
-// Hide one-time warning initially
-document.getElementById('oneTimeWarning').classList.add('hidden');
-
-document.getElementById('accessForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const submitBtn = e.target.querySelector('button[type="submit"]');
-  const buttonText = submitBtn.querySelector('.button-text');
-  const spinner = submitBtn.querySelector('.spinner-border');
-
-  // Show spinner
-  buttonText.classList.add('d-none');
-  spinner.classList.remove('d-none');
-
-  // Check lockout
-  const currentTime = Date.now();
-  if (currentTime < lockoutEndTime) {
-    const remainingSecs = Math.ceil((lockoutEndTime - currentTime)/1000);
-    document.getElementById('errorMessage').textContent = `Too many failed attempts. Try again in ${remainingSecs} seconds.`;
-    document.getElementById('errorSection').classList.remove('hidden');
-    // hide spinner
-    buttonText.classList.remove('d-none');
-    spinner.classList.add('d-none');
-    return;
-  }
-
-  if (currentTime - lastAttemptTime > lockoutDuration) {
-    attemptCount = 0;
-  }
-
-  const password = document.getElementById('password').value;
-  try {
-    const response = await fetch(`/api/strings/${stringId}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password }),
-    });
-    const data = await response.json();
-    currentData = data;
-
-    // Confirm one-time
-    if (data.isOneTime && !confirm('This content can only be viewed once and will be permanently deleted after viewing. Continue?')) {
-      // hide spinner
-      buttonText.classList.remove('d-none');
-      spinner.classList.add('d-none');
-      return;
-    }
-
-    if (response.ok && data.success) {
-      // Reset attempts
-      attemptCount = 0;
-      lastAttemptTime = 0;
-      lockoutEndTime = 0;
-
-      // Show/hide warning
-      if (data.isOneTime) {
-        document.getElementById('oneTimeWarning').classList.remove('hidden');
-      } else {
-        document.getElementById('oneTimeWarning').classList.add('hidden');
+// Utility functions
+const utils = {
+  showElement: (el) => el.classList.remove('hidden'),
+  hideElement: (el) => el.classList.add('hidden'),
+  getStringId: () => window.location.pathname.split('/').pop(),
+  
+  async fetchPasswordHint() {
+    try {
+      const response = await fetch(`/api/strings/${utils.getStringId()}/hint`);
+      const data = await response.json();
+      if (response.ok && data.success && data.hint) {
+        document.getElementById('hintText').textContent = data.hint;
+        utils.showElement(document.getElementById('passwordHint'));
       }
-
-      const content = document.getElementById('secretContent');
-      // Check for base64 image headers
-      if (
-        data.string.startsWith('iVBOR') || // PNG
-        data.string.startsWith('/9j/') ||  // JPG
-        data.string.startsWith('R0lGOD') || // GIF
-        data.string.startsWith('PHN2Zz')    // SVG
-      ) {
-        const parts = data.string.split('|');
-        content.innerHTML = '';
-
-        const img = document.createElement('img');
-        let mimeType = 'image/png'; // default
-        if (parts[0].startsWith('iVBOR')) mimeType = 'image/png';
-        else if (parts[0].startsWith('/9j/')) mimeType = 'image/jpeg';
-        else if (parts[0].startsWith('R0lGOD')) mimeType = 'image/gif';
-        else if (parts[0].startsWith('PHN2Zz')) mimeType = 'image/svg+xml';
-
-        img.src = `data:${mimeType};base64,${parts[0]}`;
-        img.style.maxWidth = '100%';
-        img.style.height = 'auto';
-        img.style.display = 'block';
-        img.style.margin = '0 auto 1rem';
-
-        content.appendChild(img);
-
-        if (parts.length > 1) {
-          const textDiv = document.createElement('div');
-          textDiv.style.marginTop = '1rem';
-          textDiv.style.borderTop = '1px solid #dee2e6';
-          textDiv.style.paddingTop = '1rem';
-          textDiv.textContent = parts[1];
-          content.appendChild(textDiv);
-          document.getElementById('copyContentBtn').style.display = 'block';
-        } else {
-          document.getElementById('copyContentBtn').style.display = 'none';
-        }
-      } else {
-        // plain text
-        content.textContent = data.string;
-        document.getElementById('copyContentBtn').style.display = 'block';
-      }
-      // Show result, hide password form
-      document.getElementById('passwordSection').classList.add('hidden');
-      document.getElementById('resultSection').classList.remove('hidden');
-      document.getElementById('errorSection').classList.add('hidden');
+    } catch (error) {
+      console.error('Error fetching password hint:', error);
+    }
+  },
+  
+  handleError(message) {
+    elements.errorMessage.textContent = message;
+    utils.showElement(elements.errorSection);
+    
+    state.attemptCount++;
+    state.lastAttemptTime = Date.now();
+    
+    if (state.attemptCount >= CONSTANTS.MAX_ATTEMPTS) {
+      state.lockoutEndTime = Date.now() + CONSTANTS.LOCKOUT_DURATION;
+      elements.errorMessage.textContent = 'Too many failed attempts. Please try again in 5 minutes.';
     } else {
-      handleError(getErrorMessage(data.error));
+      const remaining = CONSTANTS.MAX_ATTEMPTS - state.attemptCount;
+      elements.errorMessage.textContent = `${message} (${remaining} attempts remaining)`;
     }
-  } catch (error) {
-    handleError('An error occurred. Please try again.');
-    console.error(error);
-  } finally {
-    // Hide spinner
-    buttonText.classList.remove('d-none');
-    spinner.classList.add('d-none');
   }
-});
+};
 
-function handleError(message) {
-  document.getElementById('errorMessage').textContent = message;
-  document.getElementById('errorSection').classList.remove('hidden');
+// Event handlers
+const handlers = {
+  // ... existing code ...
+};
 
-  attemptCount++;
-  lastAttemptTime = Date.now();
+// Initialize
+utils.fetchPasswordHint();
+utils.hideElement(elements.oneTimeWarning);
 
-  if (attemptCount >= maxAttempts) {
-    lockoutEndTime = Date.now() + lockoutDuration;
-    document.getElementById('errorMessage').textContent = 'Too many failed attempts. Please try again in 5 minutes.';
-  } else {
-    const remainingAttempts = maxAttempts - attemptCount;
-    document.getElementById('errorMessage').textContent = `${message} (${remainingAttempts} attempts remaining)`;
-  }
-}
-
-function getErrorMessage(error) {
-  if (error && error.includes('authenticate')) {
-    return 'Unable to authenticate. Please check your password.';
-  } else if (error && error.includes('decrypt')) {
-    return 'Decryption failed. Please ensure you have the correct password.';
-  }
-  return 'Invalid password.';
-}
-
-document.getElementById('tryAgainBtn').addEventListener('click', () => {
-  document.getElementById('errorSection').classList.add('hidden');
-  document.getElementById('password').value = '';
-  document.getElementById('password').focus();
-});
-
-document.getElementById('closeBtn').addEventListener('click', () => {
-  if (currentData && currentData.isOneTime) {
-    // Indicate deletion
-    document.getElementById('passwordSection').classList.add('hidden');
-    document.getElementById('resultSection').classList.add('hidden');
-    document.getElementById('errorSection').classList.remove('hidden');
-    document.getElementById('errorMessage').textContent = 'This content has been permanently deleted.';
-    document.getElementById('tryAgainBtn').classList.add('hidden');
-  } else {
-    // Reset view
-    document.getElementById('passwordSection').classList.remove('hidden');
-    document.getElementById('resultSection').classList.add('hidden');
-    document.getElementById('password').value = '';
-  }
-});
-
-document.getElementById('copyContentBtn').addEventListener('click', () => {
-  const contentText = document.getElementById('secretContent').textContent;
-  navigator.clipboard.writeText(contentText).then(() => {
-    const btn = document.getElementById('copyContentBtn');
-    const original = btn.textContent;
-    btn.textContent = 'Copied!';
-    setTimeout(() => {
-      btn.textContent = original;
-    }, 2000);
-  });
-});
-
-// Password show/hide toggle
-document.getElementById('showPassword').addEventListener('change', (e) => {
-  document.getElementById('password').type = e.target.checked ? 'text' : 'password';
-});
-
-// Theme management
-function getInitialTheme() {
-  const savedTheme = localStorage.getItem('theme');
-  if (savedTheme) return savedTheme;
-  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    return 'dark';
-  }
-  return 'light';
-}
-
-function applyTheme(theme) {
-  document.documentElement.setAttribute('data-bs-theme', theme);
-  if (theme === 'dark') {
-    document.getElementById('darkModeToggle').classList.add('hidden');
-    document.getElementById('lightModeToggle').classList.remove('hidden');
-  } else {
-    document.getElementById('darkModeToggle').classList.remove('hidden');
-    document.getElementById('lightModeToggle').classList.add('hidden');
-  }
-  localStorage.setItem('theme', theme);
-}
+// Event listeners
+document.getElementById('accessForm').addEventListener('submit', handlers.handleSubmit);
+elements.tryAgainBtn.addEventListener('click', handlers.handleTryAgain);
+document.getElementById('closeBtn').addEventListener('click', handlers.handleClose);
+document.getElementById('copyContentBtn').addEventListener('click', handlers.handleCopy);
+document.getElementById('showPassword').addEventListener('change', handlers.handlePasswordToggle);
+document.getElementById('darkModeToggle').addEventListener('click', () => handlers.handleThemeToggle('dark'));
+document.getElementById('lightModeToggle').addEventListener('click', () => handlers.handleThemeToggle('light'));
 
 // Initialize theme
-applyTheme(getInitialTheme());
-
-// Toggle buttons
-document.getElementById('darkModeToggle').addEventListener('click', () => applyTheme('dark'));
-document.getElementById('lightModeToggle').addEventListener('click', () => applyTheme('light'));
+handlers.initializeTheme();
 </script>
 </body>
 </html>
