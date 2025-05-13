@@ -143,6 +143,10 @@ app.post('/api/strings', async (req, res) => {
   }
 
   const id = generateId();
+  // First, process the string
+  const processedString = string.trim();
+
+  // Then encrypt it
   const encryptedData = encryptString(processedString, password);
 
   let expiresAt = null;
@@ -201,13 +205,13 @@ app.post('/api/strings/:id', rateLimit, (req, res) => {
   }
 
   const encryptedData = secretStrings[id];
-  
+
   if (!encryptedData) {
     return res.status(404).json({ error: 'String not found or expired' });
   }
 
   const decrypted = decryptString(encryptedData, password);
-  
+
   if (!decrypted) {
     // Handle rate limiting for failed attempts
     if (!rateLimiter.attempts[ip]) {
@@ -367,7 +371,7 @@ app.use((error, req, res, next) => {
 app.get('/api/strings/:id/hint', (req, res) => {
   const { id } = req.params;
   const data = secretStrings[id];
-  
+
   if (!data) {
     return res.status(404).json({ error: 'String not found or expired' });
   }

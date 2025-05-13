@@ -1,108 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Access Secure String</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Access Secure String</title>
 
-<!-- Favicon -->
-<link rel="icon" href="favicon/favicon.svg" type="image/x-icon" />
-<link rel="icon" href="favicon/favicon-32x32.png" sizes="32x32" type="image/png" />
-<link rel="icon" href="favicon/favicon-16x16.png" sizes="16x16" type="image/png" />
-<link rel="manifest" href="favicon/site.webmanifest" />
-<link rel="apple-touch-icon" href="favicon/apple-touch-icon.png" />
-<link rel="android-chrome-icon" href="favicon/android-chrome-192x192.png" />
+    <!-- Favicon -->
+    <link rel="icon" href="favicon/favicon.svg" type="image/x-icon" />
+    <link rel="icon" href="favicon/favicon-32x32.png" sizes="32x32" type="image/png" />
+    <link rel="icon" href="favicon/favicon-16x16.png" sizes="16x16" type="image/png" />
+    <link rel="manifest" href="/favicon/site.webmanifest" />
+    <link rel="apple-touch-icon" href="favicon/apple-touch-icon.png" />
+    <link rel="android-chrome-icon" href="favicon/android-chrome-192x192.png" />
 
-<!-- Bootstrap CSS -->
-<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
-<!-- Font Awesome -->
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet" />
-
-<style>
-:root {
-  /* Consolidated CSS variables */
-  --primary-color: #007bff;
-  --primary-dark: #0056b3;
-  --secondary-color: #6c757d;
-  --success-color: #28a745;
-  --bg-color: #f8f9fa;
-  --text-color: #212529;
-  --border-color: #dee2e6;
-  --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --base-font-size: 16px;
-  --border-radius: 8px;
-  --transition-speed: 0.3s;
-}
-
-/* Base styles */
-body {
-  background-color: var(--bg-color);
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px 0;
-  margin: 0;
-}
-
-/* Component styles */
-.container {
-  max-width: 800px;
-  width: 100%;
-  padding: 15px;
-  margin: 0 auto;
-}
-
-.card {
-  border: none;
-  border-radius: var(--border-radius);
-  box-shadow: var(--card-shadow);
-  overflow: hidden;
-  margin: 0 auto;
-  width: 100%;
-}
-
-/* Form elements */
-.form-control {
-  border-radius: var(--border-radius);
-  padding: 12px;
-  border: 1px solid var(--border-color);
-  transition: all var(--transition-speed) ease;
-}
-
-.btn {
-  padding: 12px 24px;
-  border-radius: var(--border-radius);
-  font-weight: 500;
-  transition: all var(--transition-speed) ease;
-}
-
-/* Dark mode */
-[data-bs-theme="dark"] {
-  --bg-color: #212529;
-  --text-color: #f8f9fa;
-  --border-color: #495057;
-}
-
-/* Responsive styles */
-@media (max-width: 576px) {
-  :root {
-    --base-font-size: 14px;
-  }
-  
-  .container { padding: 10px; }
-  .card-body { padding: 1rem; }
-  .btn { padding: 8px 16px; }
-}
-
-@media (max-width: 400px) {
-  .d-flex {
-    flex-direction: column;
-    gap: 1rem;
-  }
-  .btn { width: 100%; }
-}
-</style>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet" />
+    <!-- Custom CSS -->
+    <link href="/css/styles.css" rel="stylesheet" />
 </head>
 <body>
 <!-- Theme toggle -->
@@ -167,97 +83,8 @@ body {
   </div>
 </div>
 
-<script>
-// Constants
-const CONSTANTS = {
-  MAX_ATTEMPTS: 5,
-  LOCKOUT_DURATION: 300000, // 5 mins
-  COPY_FEEDBACK_DURATION: 2000,
-  IMAGE_MIME_TYPES: {
-    'iVBOR': 'image/png',
-    '/9j/': 'image/jpeg',
-    'R0lGOD': 'image/gif',
-    'PHN2Zz': 'image/svg+xml'
-  }
-};
+<!-- Remove all inline JavaScript and just keep the external script reference -->
+<script src="/js/view.js"></script>
 
-// State management
-const state = {
-  attemptCount: 0,
-  lastAttemptTime: 0,
-  lockoutEndTime: 0,
-  currentData: null
-};
-
-// DOM Elements
-const elements = {
-  password: document.getElementById('password'),
-  errorMessage: document.getElementById('errorMessage'),
-  errorSection: document.getElementById('errorSection'),
-  passwordSection: document.getElementById('passwordSection'),
-  resultSection: document.getElementById('resultSection'),
-  secretContent: document.getElementById('secretContent'),
-  copyContentBtn: document.getElementById('copyContentBtn'),
-  oneTimeWarning: document.getElementById('oneTimeWarning'),
-  tryAgainBtn: document.getElementById('tryAgainBtn')
-};
-
-// Utility functions
-const utils = {
-  showElement: (el) => el.classList.remove('hidden'),
-  hideElement: (el) => el.classList.add('hidden'),
-  getStringId: () => window.location.pathname.split('/').pop(),
-  
-  async fetchPasswordHint() {
-    try {
-      const response = await fetch(`/api/strings/${utils.getStringId()}/hint`);
-      const data = await response.json();
-      if (response.ok && data.success && data.hint) {
-        document.getElementById('hintText').textContent = data.hint;
-        utils.showElement(document.getElementById('passwordHint'));
-      }
-    } catch (error) {
-      console.error('Error fetching password hint:', error);
-    }
-  },
-  
-  handleError(message) {
-    elements.errorMessage.textContent = message;
-    utils.showElement(elements.errorSection);
-    
-    state.attemptCount++;
-    state.lastAttemptTime = Date.now();
-    
-    if (state.attemptCount >= CONSTANTS.MAX_ATTEMPTS) {
-      state.lockoutEndTime = Date.now() + CONSTANTS.LOCKOUT_DURATION;
-      elements.errorMessage.textContent = 'Too many failed attempts. Please try again in 5 minutes.';
-    } else {
-      const remaining = CONSTANTS.MAX_ATTEMPTS - state.attemptCount;
-      elements.errorMessage.textContent = `${message} (${remaining} attempts remaining)`;
-    }
-  }
-};
-
-// Event handlers
-const handlers = {
-  // ... existing code ...
-};
-
-// Initialize
-utils.fetchPasswordHint();
-utils.hideElement(elements.oneTimeWarning);
-
-// Event listeners
-document.getElementById('accessForm').addEventListener('submit', handlers.handleSubmit);
-elements.tryAgainBtn.addEventListener('click', handlers.handleTryAgain);
-document.getElementById('closeBtn').addEventListener('click', handlers.handleClose);
-document.getElementById('copyContentBtn').addEventListener('click', handlers.handleCopy);
-document.getElementById('showPassword').addEventListener('change', handlers.handlePasswordToggle);
-document.getElementById('darkModeToggle').addEventListener('click', () => handlers.handleThemeToggle('dark'));
-document.getElementById('lightModeToggle').addEventListener('click', () => handlers.handleThemeToggle('light'));
-
-// Initialize theme
-handlers.initializeTheme();
-</script>
 </body>
 </html>
